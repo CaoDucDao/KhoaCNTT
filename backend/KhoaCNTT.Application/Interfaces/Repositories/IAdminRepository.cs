@@ -6,11 +6,11 @@ namespace KhoaCNTT.Application.Interfaces.Repositories
 {
     public interface IAdminRepository
     {
-        Task<AdminUser?> GetByUsernameAsync(string username);
-        Task<AdminUser?> GetByIdAsync(int id);
-        Task AddAsync(AdminUser admin);
-        Task UpdateAsync(AdminUser admin);
-        Task DeleteAsync(AdminUser admin);
-        Task<List<AdminUser>> GetAllAsync();
+        Task<Admin?> GetByUsernameAsync(string username);
+        Task<Admin?> GetByIdAsync(int id);
+        Task AddAsync(Admin admin);
+        Task UpdateAsync(Admin admin);
+        Task DeleteAsync(Admin admin);
+        Task<List<Admin>> GetAllAsync();
     }
 }

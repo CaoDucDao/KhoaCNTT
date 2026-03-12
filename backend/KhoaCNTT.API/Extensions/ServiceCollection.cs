@@ -1,5 +1,5 @@
 ﻿
-using System.Text;
+using KhoaCNTT.API.Filters;
 using KhoaCNTT.Application.Common.Utils;
 using KhoaCNTT.Application.Interfaces.Repositories;
 using KhoaCNTT.Application.Interfaces.Services;
@@ -8,12 +8,13 @@ using KhoaCNTT.Infrastructure.ExternalServices;
 using KhoaCNTT.Infrastructure.Identity;
 using KhoaCNTT.Infrastructure.Persistence;
 using KhoaCNTT.Infrastructure.Repositories;
+using KhoaCNTT.Infrastructure.Repositories.File;
 using KhoaCNTT.Infrastructure.Storage;
-using KhoaCNTT.API.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace KhoaCNTT.API.Extensions
 {
@@ -35,6 +36,12 @@ namespace KhoaCNTT.API.Extensions
             services.AddScoped<IAdminRepository, AdminRepository>();
             services.AddScoped<IFileRepository, FileRepository>();
             services.AddScoped<ISubjectRepository, SubjectRepository>();
+
+
+            services.AddScoped<IFileRequestRepository, FileRequestRepository>();
+            services.AddScoped<IFileResourceRepository, FileResourceRepository>();
+            services.AddScoped<IFileApprovalRepository, FileApprovalRepository>();
+            services.AddScoped<IFileService, FileService>();
 
 
             services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -48,7 +48,7 @@ namespace KhoaCNTT.Application.Services
             var passwordHash = _hasher.Hash(request.Password);
 
             // 3. Tạo Entity
-            var newAdmin = new AdminUser
+            var newAdmin = new Admin
             {
                 Username = request.Username,
                 PasswordHash = passwordHash,
@@ -89,13 +89,13 @@ namespace KhoaCNTT.Application.Services
             await _repo.DeleteAsync(admin);
         }
 
-        public async Task ChangePasswordAsync(int id, string newPassword)
-        {
-            var admin = await _repo.GetByIdAsync(id);
-            if (admin == null) throw new NotFoundException("Admin", id);
+        //public async Task ChangePasswordAsync(int id, string newPassword)
+        //{
+        //    var admin = await _repo.GetByIdAsync(id);
+        //    if (admin == null) throw new NotFoundException("Admin", id);
 
-            admin.PasswordHash = _hasher.Hash(newPassword);
-            await _repo.UpdateAsync(admin);
-        }
+        //    admin.PasswordHash = _hasher.Hash(newPassword);
+        //    await _repo.UpdateAsync(admin);
+        //}
     }
 }

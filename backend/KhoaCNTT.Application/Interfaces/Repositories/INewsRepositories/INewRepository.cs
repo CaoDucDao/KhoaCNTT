@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KhoaCNTT.Infrastructure.Persistence.Configurations
+namespace KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories
 {
-    internal class LecturerConfig
+    internal class INewRepository
     {
     }
 }

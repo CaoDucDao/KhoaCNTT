@@ -15,39 +15,39 @@ namespace KhoaCNTT.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<AdminUser?> GetByUsernameAsync(string username)
+        public async Task<Admin?> GetByUsernameAsync(string username)
         {
-            return await _context.AdminUsers
+            return await _context.Admins
                 .FirstOrDefaultAsync(u => u.Username == username);
         }
 
 
-        public async Task<AdminUser?> GetByIdAsync(int id)
+        public async Task<Admin?> GetByIdAsync(int id)
         {
-            return await _context.AdminUsers.FindAsync(id);
+            return await _context.Admins.FindAsync(id);
         }
 
-        public async Task AddAsync(AdminUser admin)
+        public async Task AddAsync(Admin admin)
         {
-            await _context.AdminUsers.AddAsync(admin);
+            await _context.Admins.AddAsync(admin);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(AdminUser admin)
+        public async Task UpdateAsync(Admin admin)
         {
-            _context.AdminUsers.Update(admin);
+            _context.Admins.Update(admin);
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(AdminUser admin)
+        public async Task DeleteAsync(Admin admin)
         {
-            _context.AdminUsers.Remove(admin);
+            _context.Admins.Remove(admin);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<AdminUser>> GetAllAsync()
+        public async Task<List<Admin>> GetAllAsync()
         {
-            return await _context.AdminUsers.ToListAsync();
+            return await _context.Admins.ToListAsync();
         }
     }
 }

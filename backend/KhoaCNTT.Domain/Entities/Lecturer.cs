@@ -15,12 +15,14 @@ namespace KhoaCNTT.Domain.Entities
         public DegreeType Degree { get; set; } // học vị (thạc sĩ, tiến sĩ...)
         public string Position { get; set; } = string.Empty; // chức vụ (giảng viên, trưởng bộ môn...)
         public DateTime? Birthdate { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+
 
         // danh sách môn học tham gia giảng dạy
         // Quan hệ: Một giảng viên dạy nhiều môn
         public ICollection<LecturerSubject> LecturerSubjects { get; set; } = new List<LecturerSubject>();
-        public string Email { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
+
 
     }
 }

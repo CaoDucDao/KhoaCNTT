@@ -8,9 +8,9 @@ namespace KhoaCNTT.Domain.Enums
 {
     public enum NewsType
     {
-        Event = 0, // sự kiện, hội thảo, ...
-        Announcement = 1, // thông báo chung
-        Recruitment = 2, // tuyển dụng
-        Other = 3 // khác
+        Event, // sự kiện, hội thảo, ...
+        Announcement, // thông báo chung
+        Recruitment, // tuyển dụng
+        Other // khác
     }
 }

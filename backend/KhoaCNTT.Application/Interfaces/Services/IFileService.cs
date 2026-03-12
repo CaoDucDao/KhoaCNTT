@@ -1,20 +1,29 @@
-﻿
-using KhoaCNTT.Application.DTOs;
-using KhoaCNTT.Application.DTOs.File;
+﻿using KhoaCNTT.Application.DTOs.File;
 
-namespace KhoaCNTT.Application.Interfaces.Services
+public interface IFileService
 {
-    public interface IFileService
-    {
-        Task UploadFileAsync(UploadFileRequest request, int adminLevel, string username); // Upload file
-        Task ApproveFileAsync(int fileId, bool isApproved, string? rejectReason, string approverName); // Duyệt file
+    // --- UPLOAD & DUYỆT ---
+    Task UploadFileAsync(UploadFileRequest request, string username, int adminLevel);
+    Task ReplaceFileAsync(int fileId, UploadFileRequest request, string username, int adminLevel);
+    Task ApproveFileAsync(int requestId, bool isApproved, string? reason, string username);
+    Task<List<FileRequestDto>> GetPendingRequestsAsync();
 
-        Task<List<FileResourceDto>> GetPendingFilesAsync(); // Lấy danh sách file đang chờ duyệt
+    // --- SỬ DỤNG ---
+    // Tìm kiếm/Lấy danh sách
+    Task<List<FileDto>> SearchFilesAsync(string keyword, List<string>? subjectCodes, int page, int pageSize, string userId, bool isAdmin);
 
-        Task<List<FileResourceDto>> SearchFilesAsync(string keyword, List<string>? subjectCodes, int page, int pageSize);
-        Task UpdateFileInfoAsync(int fileId, UpdateFileRequest request); // Cập nhật thông tin file
-        Task DeleteFileAsync(int fileId); // Xóa file
-        Task<FileResourceDto> GetFileByIdAsync(int id, string? userId, bool isAdmin);
-        Task<(Stream, string, string)> DownloadFileAsync(int fileId, string? userId, bool isAdmin); // Tải file
-    }
+    // Xem chi tiết (Tăng view count)
+    Task<FileDto> GetFileByIdAsync(int id, string? userId, bool isAdmin);
+
+    // Tải file (Tăng download count)
+    Task<(Stream, string)> DownloadFileAsync(int fileId, string? userId, bool isAdmin);
+
+    // --- Quản lý ---
+    Task DeleteFileAsync(int fileId); // Xóa FileEntity
+    Task UpdateFileInfoAsync(int fileId, UpdateFileRequest request); // Sửa metadata trực tiếp (Admin cấp cao)
+
+    // --- STATS ---
+    Task<Dictionary<string, int>> GetStatsByFileTypeAsync();
+    Task<Dictionary<string, int>> GetStatsBySubjectAsync();
+    Task<Dictionary<string, int>> GetStatsByTrafficAsync();
 }

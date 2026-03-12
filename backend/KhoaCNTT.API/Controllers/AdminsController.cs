@@ -49,7 +49,7 @@ namespace KhoaCNTT.API.Controllers
         {
             if (!IsRootAdmin()) return Forbid();
 
-            // API này dùng chung cho: Sửa thông tin, Phân quyền (đổi Level), Vô hiệu hóa (đổi IsActive)
+            // dùng chung cho: Sửa thông tin, Phân quyền (đổi Level), Vô hiệu hóa (đổi IsActive)
             await _adminService.UpdateAdminAsync(id, request);
             return Ok(new { Message = "Cập nhật thành công" });
         }
@@ -72,6 +72,4 @@ namespace KhoaCNTT.API.Controllers
         //    return Ok(new { Message = "Đổi mật khẩu thành công" });
         //}
     }
-
-    //public class ChangePasswordRequest { public string NewPassword { get; set; } }
 }

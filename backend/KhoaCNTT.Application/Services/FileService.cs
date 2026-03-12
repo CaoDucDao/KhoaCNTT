@@ -1,235 +1,306 @@
 ﻿
 using AutoMapper;
 using KhoaCNTT.Application.Common.Exceptions;
-using KhoaCNTT.Application.DTOs;
 using KhoaCNTT.Application.DTOs.File;
 using KhoaCNTT.Application.Interfaces.Repositories;
 using KhoaCNTT.Application.Interfaces.Services;
-using KhoaCNTT.Domain.Entities;
+using KhoaCNTT.Domain.Entities.FileEntities;
 using KhoaCNTT.Domain.Enums;
+using System.Threading.Tasks;
 
 namespace KhoaCNTT.Application.Services
 {
     public class FileService : IFileService
     {
-        private readonly IFileRepository _repo;
+        private readonly IFileRepository _fileRepo; // Quản lý Metadata (Hiển thị)
+        private readonly IFileRequestRepository _requestRepo;    // Quản lý Yêu cầu duyệt
+        private readonly IFileResourceRepository _resourceRepo;  // Quản lý File vật lý
+        private readonly IFileApprovalRepository _approvalRepo;  // Quản lý Lịch sử duyệt
+
         private readonly IFileStorageService _storage;
         private readonly IMapper _mapper;
+        private readonly ISubjectRepository _subjectRepo; // validate môn
         private readonly IAdminRepository _adminRepo;
-        private readonly ISubjectRepository _subjectRepo;
 
-        public FileService(IFileRepository repo, IFileStorageService storage, IMapper mapper, ISubjectRepository subjectRepo, IAdminRepository adminRepo)
+        public FileService(
+            IFileRepository fileRepo,
+            IFileRequestRepository requestRepo,
+            IFileResourceRepository resourceRepo,
+            IFileApprovalRepository approvalRepo,
+            IFileStorageService storage,
+            IMapper mapper,
+            ISubjectRepository subjectRepo,
+            IAdminRepository adminRepo)
         {
-            _repo = repo;
+            _fileRepo = fileRepo;
+            _requestRepo = requestRepo;
+            _resourceRepo = resourceRepo;
+            _approvalRepo = approvalRepo;
             _storage = storage;
             _mapper = mapper;
             _subjectRepo = subjectRepo;
             _adminRepo = adminRepo;
         }
 
-        public async Task<List<FileResourceDto>> GetPendingFilesAsync()
+        // UPLOAD & DUYỆT
+
+        public async Task ActionFileAsync(UploadFileRequest request, string username, int adminLevel, RequestType type, int? targetFileId = null)
         {
-            var entities = await _repo.GetPendingFilesAsync();
-            return _mapper.Map<List<FileResourceDto>>(entities);
-        }
+            // Validate
+            await checkSubjectCode(request.SubjectCode);
+            int adminId = await getAdminId(username);
 
-        public async Task UploadFileAsync(UploadFileRequest request, int adminLevel, string username)
-        {
-            // Validate kích thước file
-            const long MaxSize = 200 * 1024 * 1024;
-            if (request.File.Length > MaxSize)
+            // Lưu file vật lý
+            var path = await _storage.SaveFileAsync(request.File);
+
+            // Tạo Resource
+            var resource = new FileResource
             {
-                throw new BusinessRuleException("File quá lớn. Tối đa 200MB.");
-            }
-
-            // Validate Subject
-            var subject = await _subjectRepo.GetByCodeAsync(request.SubjectCode);
-
-            if (subject == null)
-            {
-                throw new BusinessRuleException($"Mã môn học '{request.SubjectCode}' không tồn tại trong hệ thống.");
-            }
-
-            // Validate Admin
-            var admin = await _adminRepo.GetByUsernameAsync(username);
-            if (admin == null) throw new Exception("Không tìm thấy Admin ID");
-
-            // Tự động điền tên môn học chuẩn từ DB
-            request.SubjectName = subject.SubjectName;
-
-            // 1. Lưu file vật lý
-            var filePath = await _storage.SaveFileAsync(request.File);
-
-            // 2. Map từ Request sang Entity
-            var fileEntity = new FileResource
-            {
-                Title = request.Title,
                 FileName = request.File.FileName,
-                FilePath = filePath,
-                ContentType = request.File.ContentType,
+                FilePath = path,
+                CreatedBy = adminId,
                 Size = request.File.Length,
-                SubjectId = subject.Id,
-                CreatedById = admin.Id,
-
-                Permission = request.Permission,
-                Status = (adminLevel == 1 || adminLevel == 2) ? FileStatus.Approved : FileStatus.Pending
+                CreatedAt = DateTime.UtcNow
             };
+            await _resourceRepo.AddAsync(resource);
 
-            // 4. Logic Phân quyền
-            if (fileEntity.Status == FileStatus.Approved)
+            // Lay Id oldResource
+            int? oldResourceId = null;
+            if (type == RequestType.Replace)
             {
-                fileEntity.ApprovedById = admin.Id; // Tự duyệt
+                var targetFile = await _fileRepo.GetByIdAsync(targetFileId.Value);
+                if (targetFile == null) throw new NotFoundException("File", targetFileId.Value);
+
+                oldResourceId = targetFile.CurrentResourceId;
             }
 
-            await _repo.AddAsync(fileEntity);
+
+            // Tạo Request
+            var fileRequest = new FileRequest
+            {
+                RequestType = type,
+                FileType = request.FileType,
+                Title = request.Title,
+                SubjectCode = request.SubjectCode,
+                Permission = request.Permission,
+                NewResourceId = resource.Id,
+                OldResourceId = oldResourceId,
+                TargetFileId = targetFileId,
+                IsProcessed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _requestRepo.AddAsync(fileRequest);
+
+            // Auto Approve nếu là Admin Cấp 1, 2
+            if (adminLevel <= 2)
+            {
+                await ApproveFileAsync(fileRequest.Id, true, "Auto Approved", username);
+            }
         }
 
-        public async Task ApproveFileAsync(int fileId, bool isApproved, string? rejectReason, string approverName)
+        public async Task UploadFileAsync(UploadFileRequest request, string username, int adminLevel)
         {
-            var file = await _repo.GetByIdAsync(fileId);
-            if (file == null) throw new NotFoundException("File", fileId);
+            await ActionFileAsync(request, username, adminLevel, RequestType.CreateNew, null);
+        }
 
-            // Validate Admin
-            var admin = await _adminRepo.GetByUsernameAsync(approverName);
-            if (admin == null) throw new Exception("Không tìm thấy Admin ID");
+        public async Task ReplaceFileAsync(int targetFileId, UploadFileRequest request, string username, int adminLevel)
+        {
+            await ActionFileAsync(request, username, adminLevel, RequestType.Replace, targetFileId);
+        }
+
+        public async Task ApproveFileAsync(int requestId, bool isApproved, string? reason, string username)
+        {
+            // Validate
+            int adminId = await getAdminId(username);
+            var request = await _requestRepo.GetByIdAsync(requestId);
+            if (request == null) throw new NotFoundException("Request", requestId);
+            if (request.IsProcessed) throw new BusinessRuleException("Yêu cầu đã được xử lý.");
+
+            var decision = isApproved ? ApprovalDecision.Approved : ApprovalDecision.Rejected;
+
+            // Lưu lịch sử duyệt
+            var approval = new FileApproval
+            {
+                FileRequestId = requestId,
+                ApproverId = adminId,
+                Decision = decision,
+                Reason = reason,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _approvalRepo.AddAsync(approval);
 
             if (isApproved)
-            {
-                file.Status = FileStatus.Approved;
-                file.RejectReason = null;
-
-                // Xử lý thay thế file cũ
-                if (file.ParentFileId.HasValue)
+            { // Nếu chấp nhận
+                // tạo mới thì tạo FileEntity mới
+                if (request.RequestType == RequestType.CreateNew)
                 {
-                    var oldFile = await _repo.GetByIdAsync(file.ParentFileId.Value);
-                    if (oldFile != null)
+                    var newFile = new FileEntity
                     {
-                        // Logic: Ẩn file cũ hoặc đánh dấu đã bị thay thế
-                        // Ví dụ: Ta có thể thêm trạng thái 'Archived' vào Enum FileStatus
-                        // oldFile.Status = FileStatus.Archived;
-                        // await _repo.UpdateAsync(oldFile);
-                    }
+                        Title = request.Title,
+                        SubjectCode = request.SubjectCode,
+                        Permission = request.Permission,
+                        CurrentResourceId = request.NewResourceId,
+                        FileType = request.FileType,
+                        ViewCount = 0,
+                        DownloadCount = 0,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = adminId
+                    };
+                    await _fileRepo.AddAsync(newFile);
+                }
+                else
+                { // thay thế thì cập nhật FileEntity cũ
+                    var targetFile = await _fileRepo.GetByIdAsync(request.TargetFileId.Value);
+                    targetFile.CurrentResourceId = request.NewResourceId; // Trỏ sang file vật lý mới
+                    targetFile.UpdatedAt = DateTime.UtcNow;
+                    await _fileRepo.UpdateAsync(targetFile);
                 }
             }
-            else
-            {
-                file.Status = FileStatus.Rejected;
-                file.RejectReason = rejectReason;
-            }
-            file.ApprovedById = admin.Id;
-            await _repo.UpdateAsync(file);
+
+            request.IsProcessed = true;
+            request.UpdatedAt = DateTime.UtcNow;
+            await _requestRepo.UpdateAsync(request);
         }
 
-
-        public async Task UpdateFileInfoAsync(int fileId, UpdateFileRequest request)
+        public async Task<List<FileRequestDto>> GetPendingRequestsAsync()
         {
-            var file = await _repo.GetByIdAsync(fileId);
-            if (file == null) throw new NotFoundException("File", fileId);
+            // var requests = await _requestRepo.GetAllAsync(r => !r.IsProcessed);
+            var requests = await _requestRepo.GetPendingRequestsWithDetailsAsync();
+            return _mapper.Map<List<FileRequestDto>>(requests);
+        }
 
-            // Validate Subject
-            var subject = await _subjectRepo.GetByCodeAsync(request.SubjectCode);
+        // SEARCH, GET, DOWNLOAD
 
-            if (subject == null)
+        public async Task<List<FileDto>> SearchFilesAsync(string keyword, List<string>? subjectCodes, int page, int pageSize, string userId, bool isAdmin)
+        {
+            var entities = await _fileRepo.SearchAsync(keyword, subjectCodes, page, pageSize);
+
+            var sendToClient = new List<FileDto>();
+            foreach (var entity in entities)
             {
-                throw new BusinessRuleException($"Mã môn học '{request.SubjectCode}' không tồn tại trong hệ thống.");
+                // Admin thấy tất cả
+                if (isAdmin)
+                {
+                    sendToClient.Add(_mapper.Map<FileDto>(entity));
+                    continue;
+                }
+
+                // Hidden -> chỉ admin
+                if (entity.Permission == FilePermission.Hidden)
+                {
+                    continue;
+                }
+
+                // StudentView -> cần login
+                if ((entity.Permission == FilePermission.StudentRead || entity.Permission == FilePermission.StudentDownload) && string.IsNullOrEmpty(userId))
+                {
+                    continue;
+                }
+                sendToClient.Add(_mapper.Map<FileDto>(entity));
             }
 
-            // Cập nhật thông tin
-            file.Title = request.Title;
-            file.SubjectId = subject.Id;
-            file.Permission = request.Permission;
+            return _mapper.Map<List<FileDto>>(entities);
+        }
 
-            await _repo.UpdateAsync(file);
+        public async Task<FileDto> GetFileByIdAsync(int id, string? userId, bool isAdmin)
+        {
+            var file = await _fileRepo.GetByIdAsync(id); // Lấy FileEntity
+            if (file == null) throw new NotFoundException("File", id);
+
+            // CHECK QUYỀN
+            CheckPermission(file.Permission, userId, isAdmin);
+
+            // Tăng View
+            file.ViewCount++;
+            await _fileRepo.UpdateAsync(file);
+
+            return _mapper.Map<FileDto>(file);
+        }
+
+        public async Task<(Stream, string)> DownloadFileAsync(int fileId, string? userId, bool isAdmin)
+        {
+            // Lấy FileEntity
+            var file = await _fileRepo.GetByIdAsync(fileId);
+            if (file == null) throw new NotFoundException("File", fileId);
+
+            // Check Quyền
+            CheckPermission(file.Permission, userId, isAdmin);
+
+            // Lấy Resource vật lý
+            // FileEntity giữ ID của Resource đang dùng
+            var resource = await _resourceRepo.GetByIdAsync(file.CurrentResourceId);
+            if (resource == null) throw new NotFoundException("File Resource", file.CurrentResourceId);
+
+            // Tăng lượt tải
+            file.DownloadCount++;
+            await _fileRepo.UpdateAsync(file);
+
+            // Stream file từ ổ cứng
+            var stream = _storage.GetFileStream(resource.FilePath);
+            if (stream == null) throw new NotFoundException("File vật lý", resource.FileName);
+
+            return (stream, resource.FileName);
         }
 
         public async Task DeleteFileAsync(int fileId)
         {
-            var file = await _repo.GetByIdAsync(fileId);
+            // Xóa FileEntity
+            var file = await _fileRepo.GetByIdAsync(fileId);
             if (file == null) throw new NotFoundException("File", fileId);
 
-            // 1. Xóa file vật lý (trên ổ cứng)
-            await _storage.DeleteFileAsync(file.FilePath);
-
-            // 2. Xóa trong DB
-            await _repo.DeleteAsync(file);
+            await _fileRepo.DeleteAsync(file);
         }
 
-        public async Task<FileResourceDto> GetFileByIdAsync(int id, string? userId, bool isAdmin)
+        public async Task UpdateFileInfoAsync(int fileId, UpdateFileRequest request)
         {
-            var file = await _repo.GetByIdAsync(id);
-            if (file == null) throw new NotFoundException("File", id);
-
-            // Check quyền xem
-            if (!isAdmin)
-            {
-                if (file.Permission == FilePermission.Hidden)
-                    throw new BusinessRuleException("Tài liệu không tồn tại hoặc bị ẩn.");
-
-                // Các quyền Student Read/Download thì phải đăng nhập mới thấy Info
-                if ((file.Permission == FilePermission.StudentRead || file.Permission == FilePermission.StudentDownload)
-                    && string.IsNullOrEmpty(userId))
-                {
-                    throw new BusinessRuleException("Vui lòng đăng nhập để xem tài liệu này.");
-                }
-            }
-
-            file.ViewCount++;
-            await _repo.UpdateAsync(file);
-
-            return _mapper.Map<FileResourceDto>(file);
-        }
-
-        public async Task<(Stream, string, string)> DownloadFileAsync(int fileId, string? userId, bool isAdmin)
-        {
-            var file = await _repo.GetByIdAsync(fileId);
+            // Chỉ sửa metadata (Title, Subject...), không sửa file vật lý
+            var file = await _fileRepo.GetByIdAsync(fileId);
             if (file == null) throw new NotFoundException("File", fileId);
 
-            // 1. CHECK QUYỀN
-            if (!isAdmin)
-            {
-                switch (file.Permission)
-                {
-                    case FilePermission.Hidden:
-                        throw new BusinessRuleException("File này đang bị ẩn.");
-
-                    case FilePermission.PublicRead:
-                        // Khách xem được, không tải được
-                        throw new BusinessRuleException("Tài liệu này chỉ cho phép xem, không cho phép tải.");
-
-                    case FilePermission.StudentRead:
-                        // Sinh viên xem được, không tải được
-                        throw new BusinessRuleException("Tài liệu này chỉ cho phép sinh viên xem, không cho phép tải.");
-
-                    case FilePermission.StudentDownload:
-                        // Sinh viên tải được -> Cần đăng nhập
-                        if (string.IsNullOrEmpty(userId))
-                            throw new BusinessRuleException("Vui lòng đăng nhập tài khoản sinh viên để tải.");
-                        break;
-
-                    case FilePermission.PublicDownload:
-                        // Ai cũng tải được -> Break
-                        break;
-                }
-            }
-
-            // 2. Tăng lượt tải
-            file.DownloadCount++;
-            await _repo.UpdateAsync(file);
-
-            // 3. Lấy Stream file
-            var stream = _storage.GetFileStream(file.FilePath);
-            if (stream == null) throw new NotFoundException("File vật lý", file.FileName);
-
-            return (stream, file.ContentType, file.FileName);
+            await checkSubjectCode(request.SubjectCode);
+            
+            file.Title = request.Title;
+            file.SubjectCode = request.SubjectCode;
+            file.Permission = request.Permission;
+            await _fileRepo.UpdateAsync(file);
         }
 
-        public async Task<List<FileResourceDto>> SearchFilesAsync(string keyword, List<string>? subjectCodes, int page, int pageSize)
-        {
-            // Gọi Repo
-            var entities = await _repo.SearchAsync(keyword, page, pageSize, subjectCodes);
+        public async Task<Dictionary<string, int>> GetStatsByFileTypeAsync() => await _fileRepo.GetStatsByFileTypeAsync();
+        public async Task<Dictionary<string, int>> GetStatsBySubjectAsync() => await _fileRepo.GetStatsBySubjectAsync();
+        public async Task<Dictionary<string, int>> GetStatsByTrafficAsync() => await _fileRepo.GetStatsByTrafficAsync();
 
-            // Map sang DTO
-            return _mapper.Map<List<FileResourceDto>>(entities);
+
+        // Hàm phụ check quyền
+        private void CheckPermission(FilePermission permission, string? userId, bool isAdmin)
+        {
+            if (isAdmin) return;
+            switch (permission)
+            {
+                case FilePermission.Hidden:
+                    throw new BusinessRuleException("Tài liệu bị ẩn.");
+                case FilePermission.StudentDownload:
+                    if (string.IsNullOrEmpty(userId)) throw new BusinessRuleException("Cần đăng nhập.");
+                    break;
+                case FilePermission.PublicRead:
+                case FilePermission.StudentRead:
+                    throw new BusinessRuleException("Không được phép tải.");
+            }
+        }
+
+        private async Task<int> getAdminId(string username)
+        {
+            var admin = await _adminRepo.GetByUsernameAsync(username);
+            if (admin == null) throw new BusinessRuleException("Không tìm thấy thông tin Admin.");
+            return admin.Id;
+        }
+
+        private async Task checkSubjectCode(string subjectCode)
+        {
+            if (subjectCode == null) return;
+            var subject = await _subjectRepo.GetByCodeAsync(subjectCode);
+            if (subject == null) throw new BusinessRuleException("Mã môn học không tồn tại");
         }
     }
 }
+
+

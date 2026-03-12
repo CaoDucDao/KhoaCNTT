@@ -41,21 +41,19 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── AdminMappingProfile.cs
                 ├── AutoMapperProfile.cs
                 ├── PassswordHasher.cs
-        └── 📁DTOs # dùng để ghi rõ các trường thông tin sẽ gửi cho client
+        └── 📁DTOs
             └── 📁Admin
                 ├── AdminResponse.cs
                 ├── CreateAdminRequest.cs
                 ├── UpdateAdminRequest.cs
-            └── 📁File
-                ├── UpdateFileRequest.cs
-                ├── UploadFileRequest.cs
-            └── 📁School
-                ├── ScheduleResponse.cs
-                ├── SchoolLoginResponse.cs
-                ├── ScoreResponse.cs
             └── 📁Comment
                 ├── CommentResponse.cs
                 ├── CreateCommentRequest.cs
+            └── 📁File
+                ├── FileDto.cs
+                ├── FileRequestDto.cs
+                ├── UpdateFileRequest.cs
+                ├── UploadFileRequest.cs
             └── 📁Lecturer
                 ├── CreateLecturerRequest.cs
                 ├── LecturerResponse.cs
@@ -64,19 +62,27 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── CreateNewsRequest.cs
                 ├── NewsResponse.cs
                 ├── UpdateNewsRequest.cs
+            └── 📁School
+                ├── ScheduleResponse.cs
+                ├── SchoolLoginResponse.cs
+                ├── ScoreResponse.cs
             ├── CommentDto.cs
-            ├── FileResourceDto.cs
             ├── LecturerDto.cs
-            ├── NewsDto.cs
-        └── 📁Interfaces # giao diện cho các class, chỉ chứa tên các hàm chức năng, không chứa logic
-            └── 📁Repositories # 
+            └── NewsDto.cs
+        └── 📁Interfaces
+            └── 📁Repositories
+                └── 📁IFileRepositories
+                    ├── IFileApprovalRepository.cs
+                    ├── IFileRepository.cs
+                    ├── IFileRequestRepository.cs
+                    ├── IFileResourceRepository.cs
                 ├── IAdminRepository.cs
                 ├── ICommentRepository.cs
-                ├── IFileRespository.cs
                 ├── ILecturerRepository.cs
                 ├── INewRepository.cs
+                ├── IRepository.cs
                 ├── ISubjectRepository.cs
-            └── 📁Services # 
+            └── 📁Services
                 ├── IAdminService.cs
                 ├── IAuthService.cs
                 ├── ICommentService.cs
@@ -86,6 +92,7 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── ILecturerService.cs
                 ├── INewsService.cs
                 ├── ISchoolApiService.cs
+                └── semesterId.json
         └── 📁Services # chứa các logic nghiệp vụ chính
             ├── AdminService.cs
             ├── AuthService.cs
@@ -105,10 +112,13 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
             ├── News.cs
             ├── Subject.cs
         └── 📁Enums
+            ├── ApprovalDecision.cs
             ├── DegreeType.cs
             ├── FilePermission.cs
-            ├── FileStatus.cs
+            ├── FileType.cs
             ├── NewsType.cs
+            ├── RequestType.cs
+            └── Status.cs
     └── 📁KhoaCNTT.Infrastructure # tầng kết nối ra bên ngoài (DB, API trường, lưu trữ file vật lý trên server)
         └── 📁ExternalServices # gọi API trường
             ├── SchoolApiClient.cs
@@ -191,10 +201,6 @@ Tải toàn bộ các gói thư viện cần thiết:
 1. Chạy lệnh cd tới KhoaCNTT.API để cùng thư mục với file .sln.
 2. Chạy lệnh `dotnet restore` để tải các gói thư viện.
 
-### Admin
-
-Sử dụng tài khoản Admin cấp 1 được lập trình sẵn trong code (admin, abc123) để thực hiện các quyền của cấp 1, và tạo tài khoản mới với quyền cấp 2/3 trong database rồi sửa trực tiếp thành cấp 1. 
-
 ### Thêm dữ liệu vào database
 
 Danh sách môn học: "KhoaCNTT\database\subjects.sql"
@@ -208,6 +214,10 @@ Danh sách môn học: "KhoaCNTT\database\subjects.sql"
 ```sql
 UPDATE Subjects SET CreatedAt = GETDATE() WHERE CreatedAt IS NULL;
 ```
+
+### Admin
+
+Sử dụng tài khoản Admin cấp 1 được lập trình sẵn trong code (admin, abc123) để thực hiện các quyền của cấp 1, và tạo tài khoản mới với quyền cấp 2/3 trong database rồi sửa trực tiếp thành cấp 1. 
 
 ## Chạy dự án
 

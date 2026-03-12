@@ -1,12 +1,12 @@
 ﻿using KhoaCNTT.Domain.Common;
 using KhoaCNTT.Domain.Enums;
 
-namespace KhoaCNTT.Domain.Entities
+namespace KhoaCNTT.Domain.Entities.NewsEntities
 {
     public class Comment : BaseEntity
     {
         public string MSV { get; set; } = string.Empty;
-        public string TenSV { get; set; } = string.Empty;
+        public string StudentName { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
 
         // Khóa ngoại: Liên kết với News

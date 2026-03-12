@@ -7,5 +7,5 @@ public interface IAdminService
     Task CreateAdminAsync(CreateAdminRequest request);
     Task UpdateAdminAsync(int id, UpdateAdminRequest request);
     Task DeleteAdminAsync(string currentUsername, int id);
-    Task ChangePasswordAsync(int id, string newPassword);
+    // Task ChangePasswordAsync(int id, string newPassword);
 }

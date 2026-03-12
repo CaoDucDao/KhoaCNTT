@@ -8,15 +8,8 @@ namespace KhoaCNTT.Infrastructure.Storage
 {
     public class LocalFileStorageService : IFileStorageService
     {
-        // private readonly IWebHostEnvironment _env;
-
-        //public LocalFileStorageService(IWebHostEnvironment env)
-        //{
-        //    _env = env;
-
-        //}
-
         private readonly string _baseUploadPath;
+        
         public LocalFileStorageService(IConfiguration config)
         {
             // Lấy đường dẫn từ config, nếu không có thì mặc định lưu vào C:/Temp/KhoaCNTT_Uploads

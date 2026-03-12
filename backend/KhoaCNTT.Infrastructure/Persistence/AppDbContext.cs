@@ -1,5 +1,7 @@
 ﻿
 using KhoaCNTT.Domain.Entities;
+using KhoaCNTT.Domain.Entities.FileEntities;
+using KhoaCNTT.Domain.Entities.NewsEntities;
 using KhoaCNTT.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,20 +11,32 @@ namespace KhoaCNTT.Infrastructure.Persistence
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<AdminUser> AdminUsers { get; set; }
-        public DbSet<FileResource> Files { get; set; }
-        public DbSet<News> News { get; set; }
-        public DbSet<Comment> Comments { get; set; }
-        public DbSet<Lecturer> Lecturers { get; set; }
+        // --- ADMIN & SUBJECT ---
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Lecturer> Lecturers { get; set; }
         public DbSet<LecturerSubject> LecturerSubjects { get; set; }
+
+        // --- FILE MODULE ---
+        public DbSet<FileEntity> FileEntities { get; set; }
+        public DbSet<FileResource> FileResources { get; set; }
+        public DbSet<FileRequest> FileRequests { get; set; }
+        public DbSet<FileApproval> FileApprovals { get; set; }
+
+        // --- NEWS MODULE ---
+        public DbSet<News> News { get; set; }
+        public DbSet<NewsResource> NewsResources { get; set; }
+        public DbSet<NewsRequest> NewsRequests { get; set; }
+        public DbSet<NewsApproval> NewsApprovals { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-            // --- 1. AdminUsers ---
-            modelBuilder.Entity<AdminUser>(e =>
+            // --- 1. Admin ---
+            modelBuilder.Entity<Admin>(e =>
             {
                 e.Property(x => x.Username).HasColumnType("VARCHAR(100)").IsRequired();
                 e.HasIndex(x => x.Username).IsUnique();
@@ -50,69 +64,28 @@ namespace KhoaCNTT.Infrastructure.Persistence
                 e.Property(x => x.Birthdate).HasColumnType("DATE");
             });
 
-            // --- 4. News ---
-            modelBuilder.Entity<News>(e =>
-            {
-                e.Property(x => x.Content).HasColumnType("VARCHAR(MAX)");
-                e.Property(x => x.NewsType).HasConversion<string>().HasColumnType("VARCHAR(100)"); // Enum -> String
-                e.Property(x => x.Status).HasColumnType("VARCHAR(50)").HasDefaultValue("Pending");
-                e.Property(x => x.PublishedDate).HasColumnType("DATETIME2");
 
-                e.HasOne(n => n.CreatedBy)
-                 .WithMany(a => a.NewsList)
-                 .HasForeignKey(n => n.CreatedById)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // --- 5. Comments ---
+            // --- 4. Comments ---
             modelBuilder.Entity<Comment>(e =>
             {
                 e.Property(x => x.MSV).HasColumnType("CHAR(10)");
                 e.Property(x => x.CreatedAt).HasColumnType("DATETIME2").HasDefaultValueSql("SYSDATETIME()");
             });
 
-            // --- 6. FileResources ---
-            modelBuilder.Entity<FileResource>(e =>
-            {
-                e.Property(x => x.Permission).HasConversion<string>().HasColumnType("VARCHAR(50)").HasDefaultValue(FilePermission.PublicRead);
-                e.Property(x => x.Status).HasConversion<string>().HasColumnType("VARCHAR(50)").HasDefaultValue(FileStatus.Pending);
-                e.Property(x => x.CreatedAt).HasColumnType("DATETIME2").HasDefaultValueSql("SYSDATETIME()");
-
-                // Quan hệ Subject
-                e.HasOne(f => f.Subject)
-                 .WithMany(s => s.Files)
-                 .HasForeignKey(f => f.SubjectId)
-                 .OnDelete(DeleteBehavior.Cascade);
-
-                // Quan hệ CreatedBy (Admin)
-                e.HasOne(f => f.CreatedBy)
-                 .WithMany(a => a.CreatedFiles)
-                 .HasForeignKey(f => f.CreatedById)
-                 .OnDelete(DeleteBehavior.NoAction); // Tránh vòng lặp Cascade
-
-                // Quan hệ ApprovedBy (Admin)
-                e.HasOne(f => f.ApprovedBy)
-                 .WithMany(a => a.ApprovedFiles)
-                 .HasForeignKey(f => f.ApprovedById)
-                 .OnDelete(DeleteBehavior.NoAction); // Tránh vòng lặp Cascade
-            });
-
-            // --- 7. LecturerSubjects ---
+            // --- 5. LecturerSubjects ---
             modelBuilder.Entity<LecturerSubject>()
                 .HasKey(ls => new { ls.LecturerId, ls.SubjectId });
 
-            // set isDeleted mặc định là false cho mọi bảng trừ LecturerSubject
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                if (entityType.ClrType != typeof(LecturerSubject))
-                {
-                    modelBuilder.Entity(entityType.ClrType)
-                        .Property<bool>("IsDeleted")
-                        .HasDefaultValue(false);
-                }
-            }
-
-            
+            //// set isDeleted mặc định là false cho mọi bảng trừ LecturerSubject
+            //foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            //{
+            //    if (entityType.ClrType != typeof(LecturerSubject))
+            //    {
+            //        modelBuilder.Entity(entityType.ClrType)
+            //            .Property<bool>("IsDeleted")
+            //            .HasDefaultValue(false);
+            //    }
+            //
         }
     }
 }
