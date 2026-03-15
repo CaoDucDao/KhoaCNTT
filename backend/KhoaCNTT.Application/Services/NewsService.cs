@@ -1,10 +1,9 @@
 ﻿using KhoaCNTT.Application.Common.Exceptions;
 using KhoaCNTT.Application.DTOs.News;
-using KhoaCNTT.Application.Interfaces.Repositories;
 using KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories;
 using KhoaCNTT.Application.Interfaces.Services;
-using KhoaCNTT.Domain.Entities.NewsEntities;
 using KhoaCNTT.Domain.Enums;
+using NewsEntities = KhoaCNTT.Domain.Entities.NewsEntities;
 
 namespace KhoaCNTT.Application.Services;
 
@@ -38,7 +37,7 @@ public class NewsService : INewsService
     public async Task<NewsResponse> GetNewsByIdAsync(int id)
     {
         var news = await _newsRepo.GetByIdWithResourceAsync(id)
-            ?? throw new NotFoundException(nameof(Domain.Entities.NewsEntities.News), id);
+            ?? throw new NotFoundException(nameof(NewsEntities.News), id);
 
         await _newsRepo.IncrementViewCountAsync(id);
         news.ViewCount++;
@@ -57,17 +56,15 @@ public class NewsService : INewsService
     public async Task<NewsRequestResponse> SubmitCreateRequestAsync(
         CreateNewsRequest dto, int submitterId, bool isSenior)
     {
-        var ct = CancellationToken.None;
-
-        var resource = new NewsResource
+        var resource = new NewsEntities.NewsResource
         {
             Content = dto.Content,
             CreatedBy = submitterId,
             CreatedAt = DateTime.UtcNow
         };
-        await _newsResourceRepo.AddAsync(resource, ct);
+        await _newsResourceRepo.AddAsync(resource);
 
-        var request = new NewsRequest
+        var request = new NewsEntities.NewsRequest
         {
             TargetNewsId = null,
             NewResourceId = resource.Id,
@@ -78,7 +75,7 @@ public class NewsService : INewsService
             IsProcessed = false,
             CreatedAt = DateTime.UtcNow
         };
-        await _newsRequestRepo.AddAsync(request, ct);
+        await _newsRequestRepo.AddAsync(request);
 
         if (isSenior)
             await ApproveRequestInternalAsync(submitterId, request.Id, ApprovalDecision.Approved, null);
@@ -91,20 +88,18 @@ public class NewsService : INewsService
     public async Task<NewsRequestResponse> SubmitReplaceRequestAsync(
         UpdateNewsRequest dto, int submitterId, bool isSenior)
     {
-        var ct = CancellationToken.None;
-
         var existingNews = await _newsRepo.GetByIdWithResourceAsync(dto.TargetNewsID)
-            ?? throw new NotFoundException(nameof(Domain.Entities.NewsEntities.News), dto.TargetNewsID);
+            ?? throw new NotFoundException(nameof(NewsEntities.News), dto.TargetNewsID);
 
-        var newResource = new NewsResource
+        var newResource = new NewsEntities.NewsResource
         {
             Content = dto.Content,
             CreatedBy = submitterId,
             CreatedAt = DateTime.UtcNow
         };
-        await _newsResourceRepo.AddAsync(newResource, ct);
+        await _newsResourceRepo.AddAsync(newResource);
 
-        var request = new NewsRequest
+        var request = new NewsEntities.NewsRequest
         {
             TargetNewsId = dto.TargetNewsID,
             NewResourceId = newResource.Id,
@@ -115,7 +110,7 @@ public class NewsService : INewsService
             IsProcessed = false,
             CreatedAt = DateTime.UtcNow
         };
-        await _newsRequestRepo.AddAsync(request, ct);
+        await _newsRequestRepo.AddAsync(request);
 
         if (isSenior)
             await ApproveRequestInternalAsync(submitterId, request.Id, ApprovalDecision.Approved, null);
@@ -128,9 +123,9 @@ public class NewsService : INewsService
     public async Task DeleteNewsAsync(int newsId)
     {
         var news = await _newsRepo.GetByIdWithResourceAsync(newsId)
-            ?? throw new NotFoundException(nameof(Domain.Entities.NewsEntities.News), newsId);
+            ?? throw new NotFoundException(nameof(NewsEntities.News), newsId);
 
-        await _newsRepo.DeleteAsync(news, CancellationToken.None);
+        await _newsRepo.DeleteAsync(news);
     }
 
     // ── Phê duyệt ────────────────────────────────────────────────
@@ -147,15 +142,13 @@ public class NewsService : INewsService
     private async Task<NewsApprovalResponse> ApproveRequestInternalAsync(
         int approverId, int requestId, ApprovalDecision decision, string? rejectReason)
     {
-        var ct = CancellationToken.None;
-
         var newsRequest = await _newsRequestRepo.GetByIdWithDetailsAsync(requestId)
-            ?? throw new NotFoundException(nameof(NewsRequest), requestId);
+            ?? throw new NotFoundException(nameof(NewsEntities.NewsRequest), requestId);
 
         if (newsRequest.IsProcessed)
             throw new BusinessRuleException("Yêu cầu này đã được xử lý.");
 
-        var approval = new NewsApproval
+        var approval = new NewsEntities.NewsApproval
         {
             ApproverId = approverId,
             NewsRequestId = requestId,
@@ -164,13 +157,13 @@ public class NewsService : INewsService
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        await _newsApprovalRepo.AddAsync(approval, ct);
+        await _newsApprovalRepo.AddAsync(approval);
 
         if (decision == ApprovalDecision.Approved)
         {
             if (newsRequest.RequestType == RequestType.CreateNew)
             {
-                var news = new News
+                var news = new NewsEntities.News
                 {
                     Title = newsRequest.Title,
                     CurrentResourceId = newsRequest.NewResourceId,
@@ -180,23 +173,23 @@ public class NewsService : INewsService
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                await _newsRepo.AddAsync(news, ct);
+                await _newsRepo.AddAsync(news);
             }
-            else // Replace
+            else
             {
                 var targetNews = await _newsRepo.GetByIdWithResourceAsync(newsRequest.TargetNewsId!.Value)
-                    ?? throw new NotFoundException(nameof(Domain.Entities.NewsEntities.News), newsRequest.TargetNewsId);
+                    ?? throw new NotFoundException(nameof(NewsEntities.News), newsRequest.TargetNewsId);
 
                 targetNews.Title = newsRequest.Title;
                 targetNews.NewsType = newsRequest.NewsType;
                 targetNews.CurrentResourceId = newsRequest.NewResourceId;
                 targetNews.UpdatedAt = DateTime.UtcNow;
-                await _newsRepo.UpdateAsync(targetNews, ct);
+                await _newsRepo.UpdateAsync(targetNews);
             }
         }
 
         newsRequest.IsProcessed = true;
-        await _newsRequestRepo.UpdateAsync(newsRequest, ct);
+        await _newsRequestRepo.UpdateAsync(newsRequest);
 
         return new NewsApprovalResponse
         {
@@ -211,7 +204,7 @@ public class NewsService : INewsService
 
     // ── Mappers ───────────────────────────────────────────────────
 
-    private static NewsResponse MapToResponse(News n) => new()
+    private static NewsResponse MapToResponse(NewsEntities.News n) => new()
     {
         NewsID = n.Id,
         Title = n.Title,
@@ -223,7 +216,7 @@ public class NewsService : INewsService
         UpdatedAt = n.UpdatedAt
     };
 
-    private static NewsRequestResponse MapRequestToResponse(NewsRequest r) => new()
+    private static NewsRequestResponse MapRequestToResponse(NewsEntities.NewsRequest r) => new()
     {
         NewsRequestID = r.Id,
         TargetNewsID = r.TargetNewsId,

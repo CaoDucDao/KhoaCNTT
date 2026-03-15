@@ -13,43 +13,44 @@ public class NewsRepository(AppDbContext context) : INewsRepository
             .Include(n => n.CurrentResource)
             .FirstOrDefaultAsync(n => n.Id == id);
 
-    public async Task<NewsEntities.News?> GetByIdWithResourceAsync(int newsId, CancellationToken ct = default) =>
+    public async Task<NewsEntities.News?> GetByIdWithResourceAsync(int newsId) =>
         await context.Set<NewsEntities.News>()
             .Include(n => n.CurrentResource)
-            .FirstOrDefaultAsync(n => n.Id == newsId, ct);
+            .FirstOrDefaultAsync(n => n.Id == newsId);
 
-    public async Task<IEnumerable<NewsEntities.News>> GetAllWithResourceAsync(CancellationToken ct = default) =>
+    public async Task<IEnumerable<NewsEntities.News>> GetAllWithResourceAsync() =>
         await context.Set<NewsEntities.News>()
             .Include(n => n.CurrentResource)
             .OrderByDescending(n => n.CreatedAt)
-            .ToListAsync(ct);
+            .ToListAsync();
 
-    public async Task IncrementViewCountAsync(int newsId, CancellationToken ct = default) =>
+    public async Task IncrementViewCountAsync(int newsId) =>
         await context.Set<NewsEntities.News>()
             .Where(n => n.Id == newsId)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ViewCount, n => n.ViewCount + 1), ct);
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ViewCount, n => n.ViewCount + 1));
 
-    public async Task AddAsync(NewsEntities.News entity, CancellationToken ct = default)
+    public async Task AddAsync(NewsEntities.News entity)
     {
         context.Set<NewsEntities.News>().Add(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(NewsEntities.News entity, CancellationToken ct = default)
+    public async Task UpdateAsync(NewsEntities.News entity)
     {
         context.Set<NewsEntities.News>().Update(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(NewsEntities.News entity, CancellationToken ct = default)
+    public async Task DeleteAsync(NewsEntities.News entity)
     {
         context.Set<NewsEntities.News>().Remove(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
     public async Task<List<NewsEntities.News>> GetAllAsync() =>
         await context.Set<NewsEntities.News>().ToListAsync();
 
-    public async Task<List<NewsEntities.News>> GetAllAsync(Expression<Func<NewsEntities.News, bool>> predicate) =>
+    public async Task<List<NewsEntities.News>> GetAllAsync(
+        Expression<Func<NewsEntities.News, bool>> predicate) =>
         await context.Set<NewsEntities.News>().Where(predicate).ToListAsync();
 }

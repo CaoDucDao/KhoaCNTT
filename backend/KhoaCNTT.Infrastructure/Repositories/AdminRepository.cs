@@ -49,5 +49,10 @@ namespace KhoaCNTT.Infrastructure.Repositories
         {
             return await _context.Admins.ToListAsync();
         }
+
+        public Task<bool> ExistsAsync(int requesterId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,40 +1,38 @@
 ﻿using KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories;
-using KhoaCNTT.Domain.Entities.NewsEntities;
 using KhoaCNTT.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using NewsEntities = KhoaCNTT.Domain.Entities.NewsEntities;
 
 namespace KhoaCNTT.Infrastructure.Repositories.News;
 
 public class NewsResourceRepository(AppDbContext context) : INewsResourceRepository
 {
-    public async Task<NewsResource?> GetByIdAsync(int id) =>
-        await context.Set<NewsResource>().FindAsync(id);
+    public async Task<NewsEntities.NewsResource?> GetByIdAsync(int id) =>
+        await context.Set<NewsEntities.NewsResource>().FindAsync(id);
 
-    public async Task<NewsResource?> GetByIdAsync(int id, CancellationToken ct = default) =>
-        await context.Set<NewsResource>().FindAsync(new object[] { id }, ct);
-
-    public async Task AddAsync(NewsResource entity, CancellationToken ct = default)
+    public async Task AddAsync(NewsEntities.NewsResource entity)
     {
-        context.Set<NewsResource>().Add(entity);
-        await context.SaveChangesAsync(ct);
+        context.Set<NewsEntities.NewsResource>().Add(entity);
+        await context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(NewsResource entity, CancellationToken ct = default)
+    public async Task UpdateAsync(NewsEntities.NewsResource entity)
     {
-        context.Set<NewsResource>().Update(entity);
-        await context.SaveChangesAsync(ct);
+        context.Set<NewsEntities.NewsResource>().Update(entity);
+        await context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(NewsResource entity, CancellationToken ct = default)
+    public async Task DeleteAsync(NewsEntities.NewsResource entity)
     {
-        context.Set<NewsResource>().Remove(entity);
-        await context.SaveChangesAsync(ct);
+        context.Set<NewsEntities.NewsResource>().Remove(entity);
+        await context.SaveChangesAsync();
     }
 
-    public async Task<List<NewsResource>> GetAllAsync() =>
-        await context.Set<NewsResource>().ToListAsync();
+    public async Task<List<NewsEntities.NewsResource>> GetAllAsync() =>
+        await context.Set<NewsEntities.NewsResource>().ToListAsync();
 
-    public async Task<List<NewsResource>> GetAllAsync(Expression<Func<NewsResource, bool>> predicate) =>
-        await context.Set<NewsResource>().Where(predicate).ToListAsync();
+    public async Task<List<NewsEntities.NewsResource>> GetAllAsync(
+        Expression<Func<NewsEntities.NewsResource, bool>> predicate) =>
+        await context.Set<NewsEntities.NewsResource>().Where(predicate).ToListAsync();
 }

@@ -15,14 +15,14 @@ public class NewsRequestRepository(AppDbContext context) : INewsRequestRepositor
             .Include(r => r.TargetNews)
             .FirstOrDefaultAsync(r => r.Id == id);
 
-    public async Task<NewsRequest?> GetByIdWithDetailsAsync(int id, CancellationToken ct = default) =>
+    public async Task<NewsRequest?> GetByIdWithDetailsAsync(int id) =>
         await context.Set<NewsRequest>()
             .Include(r => r.NewResource)
             .Include(r => r.OldResource)
             .Include(r => r.TargetNews)
-            .FirstOrDefaultAsync(r => r.Id == id, ct);
+            .FirstOrDefaultAsync(r => r.Id == id);
 
-    public async Task<IEnumerable<NewsRequest>> GetPendingAsync(CancellationToken ct = default) =>
+    public async Task<IEnumerable<NewsRequest>> GetPendingAsync() =>
         await context.Set<NewsRequest>()
             .AsNoTracking()
             .Include(r => r.NewResource)
@@ -31,29 +31,30 @@ public class NewsRequestRepository(AppDbContext context) : INewsRequestRepositor
             .Include(r => r.TargetNews)
             .Where(r => !r.IsProcessed)
             .OrderBy(r => r.CreatedAt)
-            .ToListAsync(ct);
+            .ToListAsync();
 
-    public async Task AddAsync(NewsRequest entity, CancellationToken ct = default)
+    public async Task AddAsync(NewsRequest entity)
     {
         context.Set<NewsRequest>().Add(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(NewsRequest entity, CancellationToken ct = default)
+    public async Task UpdateAsync(NewsRequest entity)
     {
         context.Set<NewsRequest>().Update(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(NewsRequest entity, CancellationToken ct = default)
+    public async Task DeleteAsync(NewsRequest entity)
     {
         context.Set<NewsRequest>().Remove(entity);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync();
     }
 
     public async Task<List<NewsRequest>> GetAllAsync() =>
         await context.Set<NewsRequest>().ToListAsync();
 
-    public async Task<List<NewsRequest>> GetAllAsync(Expression<Func<NewsRequest, bool>> predicate) =>
+    public async Task<List<NewsRequest>> GetAllAsync(
+        Expression<Func<NewsRequest, bool>> predicate) =>
         await context.Set<NewsRequest>().Where(predicate).ToListAsync();
 }
