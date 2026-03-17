@@ -1,11 +1,10 @@
-﻿using KhoaCNTT.Domain.Entities;
-using KhoaCNTT.Domain.Entities.NewsEntities;
+﻿using KhoaCNTT.Domain.Entities.NewsEntities;
 
 namespace KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories;
 
 public interface INewsRepository : IRepository<News>
 {
-    Task<News?> GetByIdWithResourceAsync(int newsId, CancellationToken ct = default);
-    Task<IEnumerable<News>> GetAllWithResourceAsync(CancellationToken ct = default);
-    Task IncrementViewCountAsync(int newsId, CancellationToken ct = default);
+    Task<News?> GetByIdWithResourceAsync(int newsId);
+    Task<IEnumerable<News>> GetAllWithResourceAsync();
+    Task IncrementViewCountAsync(int newsId);
 }

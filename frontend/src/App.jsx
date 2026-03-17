@@ -35,7 +35,9 @@ function App() {
 
 				{/* Các trang User bọc trong UserLayout */}
 				<Route path='/' element={<UserLayout />}>
-					<Route index element={<HomePlaceholder />} />{' '}
+					<Route index element={<HomePage />} />
+					<Route path='news' element={<NewsList />} />
+					<Route path='news/:id' element={<NewsDetail />} />
 					{/* Trang chủ */}
 					<Route path='lecturers' element={<LecturerList />} />
 					<Route path='lecturers/:id' element={<LecturerDetail />} />
@@ -50,7 +52,6 @@ function App() {
 					<Route path='files' element={<ManageFiles />} />
 					<Route path='lecturers' element={<ManageLecturers />} />
 					<Route path='reports' element={<ManageReports />} />
-
 					<Route path='news' element={<ManageNews />} />
 				</Route>
 			</Routes>

@@ -1,5 +1,4 @@
-﻿using KhoaCNTT.API.Models.News;
-using KhoaCNTT.Application.DTOs;
+﻿using KhoaCNTT.Application.DTOs;
 using KhoaCNTT.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,39 +57,39 @@ namespace KhoaCNTT.API.Controllers
 
         // ── Tạo tin tức (Sequence 2.3.6.1) ───────────────────────
         // POST: api/News/requests/create
-        //[HttpPost("requests/create")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> SubmitCreate([FromBody] CreateNewsRequest dto)
-        //{
-        //    try
-        //    {
-        //        var adminId = GetCurrentAdminId();
-        //        var result = await _newsService.SubmitCreateRequestAsync(dto, adminId, IsAdminLevel12());
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { Message = ex.Message });
-        //    }
-        //}
+        [HttpPost("requests/create")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SubmitCreate([FromBody] CreateNewsRequest dto)
+        {
+            try
+            {
+                var adminId = GetCurrentAdminId();
+                var result = await _newsService.SubmitCreateRequestAsync(dto, adminId, IsAdminLevel12());
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         // ── Sửa tin tức (Sequence 2.3.6.2) ───────────────────────
         // POST: api/News/requests/update
-        //[HttpPost("requests/update")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> SubmitUpdate([FromBody] UpdateNewsRequest dto)
-        //{
-        //    try
-        //    {
-        //        var adminId = GetCurrentAdminId();
-        //        var result = await _newsService.SubmitReplaceRequestAsync(dto, adminId, IsAdminLevel12());
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { Message = ex.Message });
-        //    }
-        //}
+        [HttpPost("requests/update")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SubmitUpdate([FromBody] UpdateNewsRequest dto)
+        {
+            try
+            {
+                var adminId = GetCurrentAdminId();
+                var result = await _newsService.SubmitReplaceRequestAsync(dto, adminId, IsAdminLevel12());
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         // ── Xóa tin tức (Sequence 2.3.6.3) ───────────────────────
         // DELETE: api/News/5

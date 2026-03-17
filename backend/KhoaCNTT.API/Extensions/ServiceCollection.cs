@@ -2,12 +2,14 @@
 using KhoaCNTT.API.Filters;
 using KhoaCNTT.Application.Common.Utils;
 using KhoaCNTT.Application.Interfaces.Repositories;
+using KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories;
 using KhoaCNTT.Application.Interfaces.Services;
 using KhoaCNTT.Application.Services;
 using KhoaCNTT.Infrastructure.ExternalServices;
 using KhoaCNTT.Infrastructure.Identity;
 using KhoaCNTT.Infrastructure.Persistence;
 using KhoaCNTT.Infrastructure.Repositories;
+using KhoaCNTT.Infrastructure.Repositories.News;
 using KhoaCNTT.Infrastructure.Repositories.File;
 using KhoaCNTT.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,6 +32,7 @@ namespace KhoaCNTT.API.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<INewsService, NewsService>();
             services.AddScoped<IFileStorageService, LocalFileStorageService>();
             services.AddScoped<ISchoolApiService, SchoolApiClient>();
 
@@ -38,6 +41,12 @@ namespace KhoaCNTT.API.Extensions
             services.AddScoped<ISubjectRepository, SubjectRepository>();
             services.AddScoped<ILecturerRepository, LecturerRepository>();
             services.AddScoped<ILecturerService, LecturerService>();
+
+            // 3. News Repositories
+            services.AddScoped<INewsRepository, NewsRepository>();
+            services.AddScoped<INewsResourceRepository, NewsResourceRepository>();
+            services.AddScoped<INewsRequestRepository, NewsRequestRepository>();
+            services.AddScoped<INewsApprovalRepository, NewsApprovalRepository>();
 
 
             services.AddScoped<IFileRequestRepository, FileRequestRepository>();
