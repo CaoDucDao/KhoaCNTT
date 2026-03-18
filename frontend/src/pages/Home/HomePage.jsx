@@ -94,7 +94,7 @@ const HomePage = () => {
           <div className="flex gap-8 mb-8">
             {/* Tiêu đề căn theo card lớn */}
             <div className="flex-1">
-              <h2 className="text-3xl font-bold text-white border-l-4 border-red-500 pl-4">
+              <h2 className="text-3xl font-bold text-[#1f4c7a] border-l-4 border-red-500 pl-4">
                 Tin tức & Sự kiện
               </h2>
             </div>
