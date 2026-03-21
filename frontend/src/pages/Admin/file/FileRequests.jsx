@@ -17,8 +17,14 @@ function FileRequests() {
 		try {
 			const res = await fileApi.getPendingList()
 			setRequests(res)
-		} catch (error) {
-			setPopup(error.message)
+		} catch (err) {
+			const msg =
+				err.response?.data?.message ||
+				err.response?.data?.error ||
+				err.response?.data?.detail ||
+				err.message ||
+				'Không thể kết nối đến máy chủ, thử lại sau.'
+			setPopup?.(msg)
 		}
 	}
 
@@ -27,8 +33,14 @@ function FileRequests() {
 				try {
 					const res = await fileApi.getPendingList()
 					setRequests(res)
-				} catch (error) {
-					setPopup(error.message)
+				} catch (err) {
+					const msg =
+						err.response?.data?.message ||
+						err.response?.data?.error ||
+						err.response?.data?.detail ||
+						err.message ||
+						'Không thể kết nối đến máy chủ, thử lại sau.'
+					setPopup?.(msg)
 				}
 			}
 		loadRequests()
@@ -36,26 +48,34 @@ function FileRequests() {
 
 	const handleApprove = async (isApproved, reason) => {
 		try {
-			await fileApi.approve(selected.id, { isApproved, reason })
-			setPopup(
-				`Đã ${isApproved ? 'duyệt' : 'từ chối'} yêu cầu thành công`
-			)
+			const res = await fileApi.approve(selected.id, {
+				isApproved,
+				reason
+			})
+			setPopup(res.message)
 			setSelected(null)
 			loadRequests()
-		} catch (error) {
-			setPopup(error.message)
+		} catch (err) {
+			const msg =
+				err.response?.data?.message ||
+				err.response?.data?.error ||
+				err.response?.data?.detail ||
+				err.message ||
+				'Không thể kết nối đến máy chủ, thử lại sau.'
+			setPopup?.(msg)
 		}
 	}
 
 	return (
 		<div>
 			<div className='flex justify-between items-center mb-6'>
-			<h2 className='text-lg font-semibold mb-4'>
-				Yêu cầu duyệt tài liệu
-			</h2>
-			 <p className='mb-4 text-gray-600'>Tổng số yêu cầu: {requests.total}</p>				
+				<h2 className='text-lg font-semibold mb-4'>
+					Yêu cầu duyệt tài liệu
+				</h2>
+				<p className='mb-4 text-gray-600'>
+					Tổng số yêu cầu: {requests.total}
+				</p>
 			</div>
-
 
 			<DataTable
 				columns={pendingColumns}
@@ -71,7 +91,7 @@ function FileRequests() {
 
 			{selected && (
 				<ApprovalModal
-					title='Kiểm duyệt tài liệu'
+					title='Duyệt tài liệu'
 					details={[
 						{ label: 'Loại yêu cầu', value: selected.type },
 						{ label: 'Tiêu đề', value: selected.title },

@@ -1,16 +1,115 @@
-# React + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Điều kiện cần để chạy frontend:** Máy có cài NodeJs, nếu chưa có thì xem bên dưới.
 
-Currently, two official plugins are available:
+**Cách chạy frontend:**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Khi mới clone repo về máy, cần cài các packages mà frontend dùng:
+```bash
+cd frontend
+npm install
+```
 
-## React Compiler
+- Mỗi lần chạy frontend:
+```bash
+cd frontend
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### How to install NodeJs
 
-## Expanding the ESLint configuration
+1. Download: https://nodejs.org/en/download
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. Install the windows .msi file
+3. Run the file: → Next → Next → Finish
+
+4. Check:
+```bash
+node -v
+npm -v
+```
+
+## Project Architecture
+
+```
+└── 📁src
+    └── 📁api
+        ├── adminApi.js
+        ├── authApi.js
+        ├── axiosClient.js
+        ├── fileApi.js
+        ├── lecturerApi.js
+        ├── newsApi.js
+        ├── studentApi.js
+    └── 📁assets
+    └── 📁components
+        └── 📁Layout
+            ├── AdminLayout.jsx
+            ├── UserLayout.jsx
+        └── 📁modal
+            ├── ApprovalModal.jsx
+            ├── ConfirmModal.jsx
+            ├── FormModal.jsx
+            ├── Modal.jsx
+        └── 📁parts
+            ├── Button.jsx
+            ├── DonutChart.jsx
+            ├── FilterForm.jsx
+            ├── IconButton.jsx
+            ├── PopupMessage.jsx
+            ├── SubjectMultiSelect.jsx
+            ├── SubjectSelect.jsx
+        └── 📁table
+            ├── DataTable.jsx
+            ├── FileCard.jsx
+            ├── Pagination.jsx
+    └── 📁constants
+        ├── admin.js
+        ├── file.js
+        ├── layout.js
+        ├── lecturer.js
+        ├── news.js
+    └── 📁helpers
+        ├── adminHelpers.js
+        ├── fileHelpers.js
+        ├── commonHelpers.js
+        ├── lecturerHelpers.js
+        ├── newsHelpers.js
+        ├── studentHelpers.js
+    └── 📁pages
+        └── 📁Admin
+            └── 📁file
+                ├── FileList.jsx
+                ├── FileRequests.jsx
+                ├── ManageFiles.jsx
+            └── 📁manages
+                ├── ManageAdmins.jsx
+                ├── ManageLecturers.jsx
+                ├── ManageNews.jsx
+                ├── ManageReports.jsx
+            └── 📁news
+                ├── NewsList.jsx
+                ├── NewsRequests.jsx
+                ├── ManageNewss.jsx
+        └── 📁Auth
+            ├── LoginPage.jsx
+        └── 📁File
+            ├── FileDetail.jsx
+            ├── FileList.jsx
+        └── 📁Home
+            ├── HomePage.jsx
+        └── 📁Lecturer
+            ├── LecturerDetail.jsx
+            ├── LecturerList.jsx
+        └── 📁News
+            ├── NewsDetail.jsx
+            ├── NewsList.jsx
+        └── 📁Student
+            ├── StudentPortal.jsx
+    ├── App.jsx
+    ├── index.css
+    └── main.jsx
+```
+
+
+

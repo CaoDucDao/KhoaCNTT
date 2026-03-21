@@ -25,7 +25,6 @@ namespace KhoaCNTT.Application.Services
 
         public async Task<string> LoginAdminAsync(string username, string password)
         {
-
             // ƯU TIÊN: Check trong AppSettings (Test Admin)
             var testAdminUser = _config["TestAdmin:Username"];
             var testAdminPass = _config["TestAdmin:Password"];
@@ -39,21 +38,26 @@ namespace KhoaCNTT.Application.Services
             // Check trong database
             var adminInDb = await _adminRepo.GetByUsernameAsync(username);
 
+            bool isVerified = false;
+
             if (adminInDb != null)
             {
                 if (!adminInDb.IsActive)
                 {
-                    throw new Exception("Tài khoản Admin này đã bị vô hiệu hóa.");
+                    throw new Exception("Tài khoản này đã bị vô hiệu hóa.");
                 }
-                if (!_hasher.Verify(adminInDb.PasswordHash, password))
+                if (_hasher.Verify(adminInDb.PasswordHash, password))
                 {
-                    throw new Exception("Mật khẩu Admin không chính xác.");
+                    isVerified = true;
                 }
-                // return token with username and level
-                return _jwtGenerator.GenerateAdminToken(adminInDb.Username, adminInDb.Level);
             }
 
-            throw new Exception("Thông tin đăng nhập Admin không chính xác.");
+            if (!isVerified)
+            {
+                throw new Exception("Sai tên đăng nhập hoặc mật khẩu.");
+            } else {
+                return _jwtGenerator.GenerateAdminToken(adminInDb.Username, adminInDb.Level);
+            }
         }
 
         public async Task<string> LoginStudentAsync(string username, string password)

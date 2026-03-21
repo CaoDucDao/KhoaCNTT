@@ -11,7 +11,7 @@ namespace KhoaCNTT.Application.DTOs.Admin
     {
         public string? FullName { get; set; }
         public string? Email { get; set; }
-        public string? PasswordHash { get; set; }
+        public string? Password { get; set; }
         public int? Level { get; set; } // Cấp độ quyền: 1, 2, 3
         public bool? IsActive { get; set; } // 1: Kích hoạt, 0: Vô hiệu hóa
     }

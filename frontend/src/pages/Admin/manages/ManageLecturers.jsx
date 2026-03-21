@@ -4,7 +4,7 @@ import FormModal from '../../../components/modal/FormModal'
 import ConfirmModal from '../../../components/modal/ConfirmModal'
 import PopupMessage from '../../../components/parts/PopupMessage'
 import IconButton from '../../../components/parts/IconButton'
-import { handleAction } from '../../../helpers/helpers'
+import { handleAction } from '../../../helpers/commonHelpers'
 
 import lecturerApi from '../../../api/lecturerApi'
 import { columns, fields } from '../../../constants/lecturer'

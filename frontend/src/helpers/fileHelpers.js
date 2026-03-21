@@ -48,10 +48,13 @@ export const handleDownload = async (id, file, setPopup) => {
 		link.remove()
 	} catch (error) {
 		const message =
-			error.response?.data?.detail ||
-			error.response?.data?.message ||
-			'Bạn không có quyền tải file này.'
-
+			error.response?.data?.message || 'Không thể kết nối đến máy chủ, thử lại sau.'
 		setPopup(message)
 	}
+}
+
+export function checkSize(file, maxSizeMB) {
+	const maxSize = parseInt(maxSizeMB)
+	const maxSizeBytes = maxSize * 1024 * 1024
+	return file.size <= maxSizeBytes
 }

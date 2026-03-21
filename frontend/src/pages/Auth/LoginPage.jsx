@@ -13,7 +13,7 @@ const LoginPage = () => {
 
 	const handleLogin = async (role) => {
 		if (!username || !password) {
-			setError('Vui lòng nhập đầy đủ tài khoản và mật khẩu!')
+			setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
 			return
 		}
 

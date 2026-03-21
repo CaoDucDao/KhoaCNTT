@@ -3,7 +3,7 @@ using KhoaCNTT.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace KhoaCNTT.API.Filters
+namespace KhoaCNTT.API.Utils
 {
     public class ApiExceptionFilter : IExceptionFilter
     {

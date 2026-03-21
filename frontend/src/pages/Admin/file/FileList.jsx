@@ -14,7 +14,7 @@ import {
 	editMetadataFields,
 	getSearchConfig
 } from '../../../constants/file'
-
+import { checkSize } from '../../../helpers/fileHelpers'
 import { Replace, Download, Trash2, Pencil } from 'lucide-react'
 
 function FileList() {
@@ -26,6 +26,7 @@ function FileList() {
 	const [replaceFile, setReplaceFile] = useState(null)
 	const [editFile, setEditFile] = useState(null)
 	const [popup, setPopup] = useState(null)
+	const [warning, setWarning] = useState(null)
 
 	const [page, setPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(0)
@@ -45,8 +46,14 @@ function FileList() {
 			const res = await fileApi.search({ ...filters, page })
 			setFiles(res.items)
 			setTotalPages(Math.ceil(res.total / filters.pageSize))
-		} catch (error) {
-			setPopup(error.message || 'Error loading files')
+		} catch (err) {
+			const msg =
+				err.response?.data?.message ||
+				err.response?.data?.error ||
+				err.response?.data?.detail ||
+				err.message ||
+				'Không thể kết nối đến máy chủ, thử lại sau.'
+			setPopup?.(msg)
 		}
 	}
 
@@ -56,23 +63,18 @@ function FileList() {
 				const res = await fileApi.search({ ...filters, page })
 				setFiles(res.items)
 				setTotalPages(Math.ceil(res.total / filters.pageSize))
-			} catch (error) {
-				setPopup(error.message || 'Error loading files')
+			} catch (err) {
+				const msg =
+					err.response?.data?.message ||
+					err.response?.data?.error ||
+					err.response?.data?.detail ||
+					err.message ||
+					'Không thể kết nối đến máy chủ, thử lại sau.'
+				setPopup?.(msg)
 			}
 		}
 		loadFiles()
 	}, [page, filters])
-
-	const deleteFile = async (id) => {
-		if (!window.confirm('Xóa vĩnh viễn tài liệu này?')) return
-		try {
-			await fileApi.delete(id)
-			setPopup('Đã xóa tài liệu')
-			loadFiles()
-		} catch (err) {
-			setPopup('Lỗi xóa file: ' + err.message)
-		}
-	}
 
 	return (
 		<div>
@@ -84,7 +86,7 @@ function FileList() {
 				<button
 					className='bg-[#1f4c7a] text-white px-5 py-2.5 rounded-lg hover:bg-[#163a5d] transition shadow-sm font-medium text-sm'
 					onClick={() => setShowUpload(true)}>
-					+ Upload File mới
+					Thêm tài liệu mới
 				</button>
 			</div>
 
@@ -102,7 +104,6 @@ function FileList() {
 					setPage={setPage}
 				/>
 			</div>
-
 
 			<DataTable
 				columns={columns}
@@ -127,7 +128,15 @@ function FileList() {
 						<IconButton
 							icon={Trash2}
 							color='red'
-							onClick={() => deleteFile(row.id)}
+							onClick={() =>
+								setWarning({
+									title: 'Xác nhận xóa tài liệu',
+									message:
+										'Bạn có chắc chắn muốn xóa tài liệu này?',
+									action: () => fileApi.delete(row.id),
+									popup: 'Xóa tài liệu thành công.'
+								})
+							}
 						/>
 					</>
 				)}
@@ -136,18 +145,35 @@ function FileList() {
 			{/* Modal Upload */}
 			{showUpload && (
 				<FormModal
-					title='Upload tài liệu mới'
+					title='Thêm tài liệu'
 					fields={uploadFields}
 					columns={2}
 					width='600px'
 					onSubmit={async (formData) => {
 						try {
-							await fileApi.upload(formData)
-							setPopup('Gửi yêu cầu Upload thành công')
+							const file = formData.get('file')
+
+							const error = checkSize(file, '250MB')
+							if (error) {
+								setPopup(
+									'Tài liệu tải lên không được nặng hơn 250MB.'
+								)
+								return
+							}
+							const res = await fileApi.upload(formData)
+
+							setPopup(res.message)
+
 							setShowUpload(false)
 							loadFiles()
 						} catch (err) {
-							setPopup(err.message || 'Lỗi upload')
+							const msg =
+								err.response?.data?.message ||
+								err.response?.data?.error ||
+								err.response?.data?.detail ||
+								err.message ||
+								'Không thể kết nối đến máy chủ, thử lại sau.'
+							setPopup?.(msg)
 						}
 					}}
 					onClose={() => setShowUpload(false)}
@@ -157,7 +183,7 @@ function FileList() {
 			{/* Modal Edit Metadata (Sửa tiêu đề, quyền, môn học) */}
 			{editFile && (
 				<FormModal
-					title='Chỉnh sửa thông tin file'
+					title='Sửa thông tin tài liệu'
 					fields={editMetadataFields}
 					defaultValues={editFile}
 					onSubmit={async (formData) => {
@@ -169,11 +195,17 @@ function FileList() {
 							}
 							await fileApi.updateMetadata(editFile.id, data)
 
-							setPopup('Cập nhật thông tin thành công')
+							setPopup('Cập nhật thông tin tài liệu thành công.')
 							setEditFile(null)
 							loadFiles()
 						} catch (err) {
-							setPopup(err.message || 'Lỗi cập nhật thông tin')
+							const msg =
+								err.response?.data?.message ||
+								err.response?.data?.error ||
+								err.response?.data?.detail ||
+								err.message ||
+								'Không thể kết nối đến máy chủ, thử lại sau.'
+							setPopup?.(msg)
 						}
 					}}
 					onClose={() => setEditFile(null)}
@@ -183,7 +215,7 @@ function FileList() {
 			{/* Modal Replace */}
 			{replaceFile && (
 				<FormModal
-					title='Thay thế tài liệu'
+					title='Đổi tài liệu'
 					fields={replaceFields}
 					defaultValues={{ oldTitle: replaceFile.title }}
 					onSubmit={async (formData) => {
@@ -198,13 +230,30 @@ function FileList() {
 								'Permission',
 								replaceFile.permission
 							)
+							const file = formData.get('file')
 
-							await fileApi.replace(replaceFile.id, formData)
-							setPopup('Gửi yêu cầu Replace thành công')
+							const error = checkSize(file, '250MB')
+							if (error) {
+								setPopup(
+									'Tài liệu tải lên không được nặng hơn 250MB.'
+								)
+								return
+							}
+							const res = await fileApi.replace(
+								replaceFile.id,
+								formData
+							)
+							setPopup(res.message)
 							setReplaceFile(null)
 							loadFiles()
 						} catch (err) {
-							setPopup(err.message || 'Lỗi replace')
+							const msg =
+								err.response?.data?.message ||
+								err.response?.data?.error ||
+								err.response?.data?.detail ||
+								err.message ||
+								'Không thể kết nối đến máy chủ, thử lại sau.'
+							setPopup?.(msg)
 						}
 					}}
 					onClose={() => setReplaceFile(null)}
@@ -213,6 +262,31 @@ function FileList() {
 
 			{popup && (
 				<PopupMessage message={popup} onClose={() => setPopup(null)} />
+			)}
+
+			{warning && (
+				<ConfirmModal
+					title={warning.title}
+					message={warning.message}
+					onConfirm={async () => {
+						try {
+							await warning.action()
+							setPopup(warning.popup)
+							setWarning(null)
+							loadFiles()
+						} catch (err) {
+							const msg =
+								err.response?.data?.message ||
+								err.response?.data?.error ||
+								err.response?.data?.detail ||
+								err.message ||
+								'Không thể kết nối đến máy chủ, thử lại sau.'
+							setPopup?.(msg)
+						}
+					}}
+					onClose={() => setWarning(null)}
+					confirmText='Xác nhận'
+				/>
 			)}
 		</div>
 	)

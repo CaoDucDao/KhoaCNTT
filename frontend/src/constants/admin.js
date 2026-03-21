@@ -22,7 +22,7 @@ export const columns = [
 	{
 		key: 'isActive',
 		label: 'Trạng thái',
-		render: (value) => (value === 1 ? 'Đang hoạt động' : 'Bị khóa')
+		render: (value) => ((value === 1 || value === true)? 'Đang hoạt động' : 'Bị khóa')
 	}
 ]
 
@@ -61,8 +61,8 @@ export const fields = [
 		label: 'Trạng thái',
 		type: 'select',
 		options: [
-			{ label: 'Đang hoạt động', value: 1 },
-			{ label: 'Bị khóa', value: 0 }
+			{ label: 'Đang hoạt động', value: true },
+			{ label: 'Bị khóa', value: false }
 		]
 	}
 ]

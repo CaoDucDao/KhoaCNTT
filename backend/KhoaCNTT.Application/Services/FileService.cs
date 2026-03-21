@@ -23,7 +23,7 @@ namespace KhoaCNTT.Application.Services
         private readonly IFileResourceRepository _resourceRepo;  // Quản lý File vật lý
         private readonly IFileApprovalRepository _approvalRepo;  // Quản lý Lịch sử duyệt
 
-        private readonly IFileStorageService _storage;
+        private readonly IFileStorageService _storage; // Lưu file vật lý
         private readonly IMapper _mapper;
         private readonly ISubjectRepository _subjectRepo; // validate môn
         private readonly IAdminRepository _adminRepo;
@@ -56,6 +56,10 @@ namespace KhoaCNTT.Application.Services
         {
             // Validate
             await checkSubjectCode(request.SubjectCode);
+            if (request.Title.Length < 3 || request.Title.Length > 20)
+            {
+                throw new BusinessRuleException("Tiêu đề phải có độ dài từ 3-20 ký tự.");
+            }
             int adminId = await getAdminId(username);
 
             // Lưu file vật lý
@@ -74,14 +78,13 @@ namespace KhoaCNTT.Application.Services
 
             // Lay Id oldResource
             int? oldResourceId = null;
-            if (type == RequestType.Replace)
+            if (type == RequestType.Replace && targetFileId != null)
             {
                 var targetFile = await _fileRepo.GetByIdAsync(targetFileId.Value);
                 if (targetFile == null) throw new NotFoundException("File", targetFileId.Value);
 
                 oldResourceId = targetFile.CurrentResourceId;
             }
-
 
             // Tạo Request
             var fileRequest = new FileRequest
@@ -172,7 +175,6 @@ namespace KhoaCNTT.Application.Services
 
         public async Task<PagedResult<FileRequestDto>> GetPendingRequestsAsync()
         {
-            // var requests = await _requestRepo.GetAllAsync(r => !r.IsProcessed);
             var requests = await _requestRepo.GetPendingRequestsWithDetailsAsync();
             return new PagedResult<FileRequestDto>
             {
@@ -204,13 +206,6 @@ namespace KhoaCNTT.Application.Services
                 {
                     continue;
                 }
-
-                // StudentView -> cần login
-                if ((entity.Permission == FilePermission.StudentRead || entity.Permission == FilePermission.StudentDownload) && string.IsNullOrEmpty(userId))
-                {
-                    continue;
-                }
-                sendToClient.Add(_mapper.Map<FileDto>(entity));
             }
 
             return new PagedResult<FileDto>
@@ -226,14 +221,14 @@ namespace KhoaCNTT.Application.Services
             if (file == null) throw new NotFoundException("File", id);
 
             // CHECK QUYỀN
-            CheckPermission(file.Permission, userId, isAdmin);
+            CheckPermission(file.Permission, userId, isAdmin, "xem");
 
             var extension = Path.GetExtension(file.CurrentResource.FileName).ToLower();
 
-            // CHẶN HÌNH Ảnh VÀ CÁC FILE DỄ COPY
+            // chỉ hỗ trợ xem trước PDF
             if (extension != ".pdf")
             {
-                throw new BusinessRuleException("Tài liệu này không hỗ trợ xem trước để bảo vệ bản quyền. Vui lòng tải về.");
+                throw new BusinessRuleException("Tài liệu này không hỗ trợ xem trước.");
             }
 
             var stream = _storage.GetFileStream(file.CurrentResource.FilePath);
@@ -269,7 +264,7 @@ namespace KhoaCNTT.Application.Services
             if (file == null) throw new NotFoundException("File", fileId);
 
             // Check Quyền
-            CheckPermission(file.Permission, userId, isAdmin);
+            CheckPermission(file.Permission, userId, isAdmin, "tải về");
 
             // Lấy Resource vật lý
             // FileEntity giữ ID của Resource đang dùng
@@ -301,12 +296,16 @@ namespace KhoaCNTT.Application.Services
         public async Task UpdateFileInfoAsync(int fileId, UpdateFileRequest request)
         {
             // Chỉ sửa metadata (Title, Subject...), không sửa file vật lý
+
             var file = await _fileRepo.GetByIdAsync(fileId);
             if (file == null) throw new NotFoundException("File", fileId);
-
+            if (request.Title.Length < 3 || request.Title.Length > 20)
+            {
+                throw new BusinessRuleException("Tiêu đề phải có độ dài từ 3-20 ký tự.");
+            }
             await checkSubjectCode(request.SubjectCode);
 
-            file.Title = request.Title;
+            file.Title = request.Title ?? request.Title;
             file.SubjectCode = string.IsNullOrWhiteSpace(request.SubjectCode)
                 ? null
                 : request.SubjectCode;
@@ -321,19 +320,23 @@ namespace KhoaCNTT.Application.Services
 
 
         // Hàm phụ check quyền
-        private void CheckPermission(FilePermission permission, string? userId, bool isAdmin)
+        private void CheckPermission(FilePermission permission, string? userId, bool isAdmin, string action)
         {
             if (isAdmin) return;
             switch (permission)
             {
                 case FilePermission.Hidden:
                     throw new BusinessRuleException("Tài liệu bị ẩn.");
+
                 case FilePermission.StudentDownload:
-                    if (string.IsNullOrEmpty(userId)) throw new BusinessRuleException("Cần đăng nhập.");
+                    if (string.IsNullOrEmpty(userId)) throw new BusinessRuleException($"Cần đăng nhập để {action} tài liệu này.");
                     break;
-                case FilePermission.PublicRead:
-                case FilePermission.StudentRead:
-                    throw new BusinessRuleException("Không được phép tải.");
+
+                case FilePermission.PublicRead or FilePermission.StudentRead: 
+                    if (action == "tải về") throw new BusinessRuleException("Không được tải tài liệu này.");
+                     break;
+                    
+                case FilePermission.PublicDownload: break;
             }
         }
 

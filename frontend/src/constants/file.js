@@ -20,16 +20,16 @@ export const editMetadataFields = [
 		type: 'select',
 		options: [
 			{
-				label: 'PublicDownload',
+				label: 'Được tải',
 				value: 'PublicDownload'
 			},
-			{ label: 'PublicRead', value: 'PublicRead' },
-			{ label: 'StudentRead', value: 'StudentRead' },
+			{ label: 'Chỉ xem', value: 'PublicRead' },
+			{ label: 'SV chỉ xem', value: 'StudentRead' },
 			{
-				label: 'StudentDownload',
+				label: 'SV được tải',
 				value: 'StudentDownload'
 			},
-			{ label: 'Hidden', value: 'Hidden' }
+			{ label: 'Ẩn', value: 'Hidden' }
 		]
 	},
 	{
@@ -89,7 +89,7 @@ export const pendingColumns = [
 export const uploadFields = [
 	{
 		name: 'title',
-		label: 'Tiêu đề tài liệu',
+		label: 'Tiêu đề',
 		required: true,
 	},
 	{
@@ -109,16 +109,16 @@ export const uploadFields = [
 		type: 'select',
 		options: [
 			{
-				label: 'PublicDownload',
+				label: 'Được tải',
 				value: 'PublicDownload'
 			},
-			{ label: 'PublicRead', value: 'PublicRead' },
-			{ label: 'StudentRead', value: 'StudentRead' },
+			{ label: 'Chỉ xem', value: 'PublicRead' },
+			{ label: 'SV chỉ xem', value: 'StudentRead' },
 			{
-				label: 'StudentDownload',
+				label: 'SV được tải',
 				value: 'StudentDownload'
 			},
-			{ label: 'Hidden', value: 'Hidden' }
+			{ label: 'Ẩn', value: 'Hidden' }
 		]
 	},
 	{
@@ -150,15 +150,15 @@ export const replaceFields = [
 export const getSearchConfig = (subjects) => [
 	{
 		name: 'keyword',
-		label: 'Keyword',
+		label: 'Từ khóa',
 		type: 'text',
-		placeholder: 'Search by title...',
+		placeholder: 'Tìm kiếm...',
 		colSpan: 2,
 		width: "w-[200px]"
 	},
 	{
 		name: 'subjectCodes',
-		label: 'Subjects',
+		label: 'Môn học',
 		type: 'checkbox-group',
 		colSpan: 3,
 		options: subjects.map((s) => ({
@@ -168,21 +168,21 @@ export const getSearchConfig = (subjects) => [
 	},
 	{
 		name: 'fileType',
-		label: 'File Type',
+		label: 'Loại tài liệu',
 		type: 'select',
 		colSpan: 2,
 		options: [
-			{ label: 'All types', value: '' },
-			{ label: 'Lecture Notes', value: 'LectureNotes' },
-			{ label: 'Test', value: 'Test' },
-			{ label: 'Form', value: 'Form' },
-			{ label: 'Other', value: 'Other' }
+			{ label: 'Tất cả', value: '' },
+			{ label: 'Bài giảng', value: 'LectureNotes' },
+			{ label: 'Đề thi', value: 'Test' },
+			{ label: 'Biểu mẫu', value: 'Form' },
+			{ label: 'Khác', value: 'Other' }
 		],
 		width: "w-[140px]"
 	},
 	{
 		name: 'pageSize',
-		label: 'Page Size',
+		label: 'Số kết quả',
 		type: 'number',
 		defaultValue: 10,
 		colSpan: 1,

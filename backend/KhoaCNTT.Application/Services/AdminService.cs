@@ -45,32 +45,10 @@ namespace KhoaCNTT.Application.Services
             // Check trùng Username
             var existAdmin = await _repo.GetByUsernameAsync(request.Username);
             if (existAdmin != null)
-                throw new BusinessRuleException("Tên đăng nhập đã tồn tại.");
+                throw new BusinessRuleException("Tên đăng nhập này đã tồn tại.");
 
-            // Check level
-            if (request.Level != 2 && request.Level != 3)
-                throw new BusinessRuleException("Cấp độ quản trị viên phải là 2 hoặc 3.");
-
-            // Check email
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                try
-                {
-                    var email = new MailAddress(request.Email);
-                }
-                catch
-                {
-                    throw new BusinessRuleException("Email không hợp lệ.");
-                }
-            } else
-            {
-                throw new BusinessRuleException("Email không được để trống.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
-            {
-                throw new BusinessRuleException("Mật khẩu phải có ít nhất 6 ký tự.");
-            }
+            // Check các trường khác
+            _checkFields(request.Password, request.Email, request.Level, true);
 
             // 2. Hash Password
             var passwordHash = _hasher.Hash(request.Password);
@@ -99,27 +77,12 @@ namespace KhoaCNTT.Application.Services
                 throw new BusinessRuleException("Không thể chỉnh sửa thông tin của Super Admin.");
             }
 
-            if (request.Level.HasValue && request.Level != 2 && request.Level != 3)
-            {
-                throw new BusinessRuleException("Cấp độ quản trị viên phải là 2 hoặc 3.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                try
-                {
-                    var email = new MailAddress(request.Email);
-                }
-                catch
-                {
-                    throw new BusinessRuleException("Email không hợp lệ.");
-                }
-            }
+            _checkFields(request.Password, request.Email, request.Level, false);
 
             // Cập nhật thông tin (Không cho đổi Username)
             admin.FullName = request.FullName ?? admin.FullName;
             admin.Email = request.Email ?? admin.Email;
-            admin.PasswordHash = request.PasswordHash != null ? _hasher.Hash(request.PasswordHash) : admin.PasswordHash;
+            admin.PasswordHash = request.Password != null ? _hasher.Hash(request.Password) : admin.PasswordHash;
             admin.Level = request.Level ?? admin.Level;
             admin.IsActive = request.IsActive ?? admin.IsActive;
 
@@ -138,6 +101,37 @@ namespace KhoaCNTT.Application.Services
             }
 
             await _repo.DeleteAsync(admin);
+        }
+
+        private bool _checkFields(string? password,string? email, int? level, bool isCreate)
+        {
+            if (level != null && (level < 1 || level > 3))
+            {
+                throw new BusinessRuleException("Cấp độ quản trị viên không hợp lệ. Phải là 1, 2 hoặc 3.");
+            }
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                try
+                {
+                    _ = new MailAddress(email);
+                }
+                catch
+                {
+                    throw new BusinessRuleException("Email không hợp lệ.");
+                }
+            } else
+            {
+                if (isCreate)
+                {
+                    throw new BusinessRuleException("Email không được để trống.");
+                }
+            }
+
+            if ((string.IsNullOrWhiteSpace(password) || password.Length < 6) && isCreate)
+            {
+                throw new BusinessRuleException("Mật khẩu phải có ít nhất 6 ký tự.");
+            }
+            return true;
         }
 
         //public async Task ChangePasswordAsync(int id, string newPassword)

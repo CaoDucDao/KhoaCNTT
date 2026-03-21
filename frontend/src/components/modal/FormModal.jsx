@@ -71,22 +71,26 @@ function FormModal({
 								) : field.key === 'subjectCode' ||
 								  field.name === 'subjectCode' ? (
 									<>
-									<input
-			type="hidden"
-			name={field.name}
-			defaultValue={defaultValues?.[field.name] ?? ''}
-		/>
-									<SubjectSelect
-										value={
-											defaultValues?.[field.name] ??
-											''
-										}
-										onChange={(value) => {
-											document.querySelector(
-												`[name="${field.name}"]`
-											).value = value
-										}}
-									/></>
+										<input
+											type='hidden'
+											name={field.name}
+											defaultValue={
+												defaultValues?.[field.name] ??
+												''
+											}
+										/>
+										<SubjectSelect
+											value={
+												defaultValues?.[field.name] ??
+												''
+											}
+											onChange={(value) => {
+												document.querySelector(
+													`[name="${field.name}"]`
+												).value = value
+											}}
+										/>
+									</>
 								) : field.key === 'subjectCodes' ||
 								  field.name === 'subjectCodes' ? (
 									<SubjectMultiSelect

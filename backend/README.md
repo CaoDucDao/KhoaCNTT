@@ -19,15 +19,13 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
         └── 📁Controllers
             ├── AdminsController.cs
             ├── AuthController.cs
-            ├── CommentsController.cs
             ├── FilesController.cs
             ├── LecturersController.cs
             ├── NewsController.cs
             ├── StudentsController.cs
             ├── SubjectController.cs
-        └── 📁Extensions
+        └── 📁Utils
             ├── ServiceCollection.cs # đăng ký các services, controllers vào DI container
-        └── 📁Filters
             ├── ApiExceptionFilter.cs
         ├── Program.cs
     └── 📁KhoaCNTT.Application # tầng logic nghiệp vụ
@@ -38,7 +36,6 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── BusinessRule.cs
                 ├── NotFound.cs
             └── 📁Utils
-                ├── AdminMappingProfile.cs
                 ├── AutoMapperProfile.cs
                 ├── PassswordHasher.cs
         └── 📁DTOs
@@ -58,6 +55,7 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── CreateLecturerRequest.cs
                 ├── LecturerResponse.cs
                 ├── UpdateLecturerRequest.cs
+                ├── LecturerSearchParams.cs
             └── 📁News
                 ├── CreateNewsRequest.cs
                 ├── NewsResponse.cs
@@ -68,6 +66,7 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                 ├── ScoreResponse.cs
             ├── CommentDto.cs
             ├── LecturerDto.cs
+            ├── PagedResult.cs
             └── NewsDto.cs
         └── 📁Interfaces
             └── 📁Repositories
@@ -76,16 +75,19 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
                     ├── IFileRepository.cs
                     ├── IFileRequestRepository.cs
                     ├── IFileResourceRepository.cs
+                └── 📁INewsRepositories
+                    ├── INewsApprovalRepository.cs
+                    ├── INewsRepository.cs
+                    ├── INewsRequestRepository.cs
+                    ├── INewsResourceRepository.cs
                 ├── IAdminRepository.cs
                 ├── ICommentRepository.cs
                 ├── ILecturerRepository.cs
-                ├── INewRepository.cs
                 ├── IRepository.cs
                 ├── ISubjectRepository.cs
             └── 📁Services
                 ├── IAdminService.cs
                 ├── IAuthService.cs
-                ├── ICommentService.cs
                 ├── IFileService.cs
                 ├── IFileStorageService.cs
                 ├── IJwtTokenGenerator.cs
@@ -104,12 +106,20 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
         └── 📁Common # lớp cơ sở cho tất cả các entity
             ├── BaseEntity.cs # chứa các trường chung như Id, CreatedAt, UpdatedAt
         └── 📁Entities
-            ├── AdminUser.cs
-            ├── Comment.cs
-            ├── FileResource.cs
+            └── 📁FileEntities
+                ├── FileApproval.cs
+                ├── FileEntity.cs
+                ├── FileRequest.cs
+                └── FileResource.cs
+            └── 📁NewsEntities
+                ├── NewsApproval.cs
+                ├── Comment.cs                
+                ├── News.cs
+                ├── NewsRequest.cs
+                └── NewsResource.cs
+            ├── Admin.cs
             ├── Lecturer.cs
             ├── LecturerSubject.cs
-            ├── News.cs
             ├── Subject.cs
         └── 📁Enums
             ├── ApprovalDecision.cs
@@ -117,8 +127,7 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
             ├── FilePermission.cs
             ├── FileType.cs
             ├── NewsType.cs
-            ├── RequestType.cs
-            └── Status.cs
+            └── RequestType.cs
     └── 📁KhoaCNTT.Infrastructure # tầng kết nối ra bên ngoài (DB, API trường, lưu trữ file vật lý trên server)
         └── 📁ExternalServices # gọi API trường
             ├── SchoolApiClient.cs
@@ -132,11 +141,18 @@ Clean Architecture có 4 layers: API, Application, Domain, Infrastructure.
             └── 📁Migrations
             ├── AppDbContext.cs
         └── 📁Repositories # cài đặt thao tác với database
+            └── File
+                ├── FileApprovalRepository.cs
+                ├── FileRepository.cs
+                ├── FileRequestRepository.cs
+                ├── FileResourceRepository.cs
+            └── News
+                ├── NewsApprovalRepository.cs
+                ├── NewsRepository.cs
+                ├── NewsRequestRepository.cs
+                ├── NewsResourceRepository.cs
             ├── AdminRepository.cs
-            ├── CommentRepository.cs
-            ├── FileRepository.cs
             ├── LecturerRepository.cs
-            ├── NewsRepository.cs
             ├── SubjectRepository.cs
         └── 📁Storage
             ├── LocalFileStorageService.cs # lưu file vật lý trên server
@@ -157,13 +173,6 @@ API → Application → Domain
         ↓
     Infrastructure
 
-## Frontend
-
-MVC với 3 layers: Views, Controllers, Models.
-```bash
-
-```
-
 # Project Setup
 
 Tạo folder mới để lưu trữ file trên ổ D nếu muốn test các chức năng quản lý tài liệu: `D:\KhoaCNTT_data`.
@@ -176,7 +185,7 @@ Cách xem và chỉnh sửa dữ liệu trực tiếp trong database mà không 
 1. Chọn View trên tab trên cùng của Visual Studio, chọn SQL Server Object Explorer.
 2. (localdb)\\MSSQLLocalDB -> Databases -> khoacntt.
 
-Khả năng cần sửa connectionStrings đúng với máy cá nhân trong file `appsettings.json` của KhoaCNTT.API để trỏ đến database mới tạo:
+Đa phần là không cần, nhưng tùy máy sẽ phải sửa connectionStrings đúng với máy cá nhân trong file `appsettings.json` của KhoaCNTT.API để trỏ đến database mới tạo:
 ```json
 "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=khoacntt;Trusted_Connection=True;"
@@ -207,13 +216,9 @@ Danh sách môn học: "KhoaCNTT\database\subjects.sql"
 
 1. Chọn View trên tab trên cùng của Visual Studio, chọn SQL Server Object Explorer.
 2. (localdb)\\MSSQLLocalDB -> Databases -> khoacntt.
-![Image](/subjects.png)
-3. Nếu CreatedAt là null thì chạy lệnh SQL danh sách môn học bên trên.
-4. Nếu CreatedAt là not null thì đổi lại thành null rồi update như trong hình.
-5. Chạy lệnh SQL sau để CreatedAt không bị null:
-```sql
-UPDATE Subjects SET CreatedAt = GETDATE() WHERE CreatedAt IS NULL;
-```
+3. Chuột phải vô khoacntt, chọn "New Query".
+4. Dán lệnh SQL từ file `subjects.sql` vào ô query.
+5. Nhấn Execute để chạy lệnh, dữ liệu sẽ được thêm vào database.
 
 ### Admin
 
@@ -280,27 +285,6 @@ Code các cấu hình mapping giữa entity và database trong folder Configurat
 
 Viết API Controller để nhận request từ client, gọi service trong Application để xử lý nghiệp vụ, trả về response cho client.
 
-## Ví dụ chức năng quản lý tin tức
-
-Đoạn này tôi copy AI.
-1.  **Domain:** Vào `Entities`, tạo class `News.cs`.
-2.  **Infrastructure:**
-    *   Vào `AppDbContext.cs`, thêm `DbSet<News> News { get; set; }`.
-    *   Tạo Migration: `Add-Migration AddNewsTable` -> `Update-Database`.
-    *   Vào `Repositories`, tạo `NewsRepository.cs` và Interface tương ứng.
-3.  **Application:**
-    *   Vào `DTOs/News`, tạo `CreateNewsRequest.cs`, `NewsResponse.cs`.
-    *   Vào `Interfaces/Services`, tạo `INewsService.cs`.
-    *   Vào `Services`, tạo `NewsService.cs` (Viết logic check, map dữ liệu, gọi repo).
-    *   Vào `Mappings/AutoMapperProfile.cs`, cấu hình map từ Entity sang DTO.
-4.  **API:**
-    *   Vào `Controllers`, tạo `NewsController.cs`.
-    *   Inject `INewsService` và viết các API (GET, POST, PUT, DELETE).
-5.  **DI:** Vào `Extensions/ServiceCollection.cs`, đăng ký Service và Repository vừa tạo.
-
-*   Dùng **AutoMapper** để chuyển đổi dữ liệu, không gán tay từng dòng `dto.Name = entity.Name`.
-*   Luôn bắt lỗi bằng `BusinessRuleException` hoặc `NotFoundException` (đã cấu hình sẵn filter xử lý lỗi).
-
 # Test
 
 Cách test sử dụng swagger có sẵn (có thể dùng postman, nhưng swagger tiện hơn):
@@ -312,14 +296,26 @@ Cách test sử dụng swagger có sẵn (có thể dùng postman, nhưng swagge
     - Lướt lên trên đàu, nhấn Authorize, dán "Bearer token_vừa_copy" vào ô giá trị, nhấn Authorize xong có thể sử dụng các route yêu cầu tài khoản.
     *Ví dụ:* `Bearer eyJhbGciOi ... (dài lắm)`
 
-*Quy trình test sau khi code:*
-Code -> test.
-Có lỗi -> sửa -> test lại.
-Không sửa được -> chatgpt.
-Chatgpt không sửa được -> hỏi tôi.
-Test thấy không có lỗi -> commit -> push.
-
 Ai code xong phần của mình thì nhắn cho người test phần đấy (đã ghi rõ trong doc) để clone repo về và test luôn. Thấy lỗi thì báo lại cho dev để sửa luôn, không cần đợi cả nhóm xong hết mới sửa.
+
+## Chạy các file tạo data mẫu
+
+Mục đích là cho tiện việc kiểm thử.
+
+Yêu cầu: máy có python, và đã cài thư viện requests (`pip install requests`).
+
+Chạy dự án trước, rồi sử dụng Swagger để tạo token cho admin cấp 1, 2, 3. Copy & paste 3 token vô 3 file: 
+- `upfiles.py` - it's me =))
+- `uplecturers.py` - Le Dinh Minh
+- `upnews.py` - Cao Duc Dao 
+
+*Những file này chạy được hay không đều do dev nhé.*
+
+**Lưu ý**: đặc biệt với `upfiles.py`, vì nó có liên quan đến file vật lý trên server, nên cần chỉnh sửa đường dẫn lưu file cho phù hợp với máy cá nhân trước khi chạy. Tìm một thư mục chứa nhiều tài liệu trên máy, copy đường dẫn, dán vào dòng này:
+
+```bash
+ROOT_FOLDER = r"E:\PDF\Programming"
+```
 
 # How to Commit code
 
@@ -330,4 +326,4 @@ Tạo branch mới với tên theo chức năng mình làm. Ví dụ: `tintuc`, 
 # Note
 
 Sử dụng các file tôi đã code sẵn làm mẫu, copy-paste rồi sửa lại cho phù hợp sẽ dễ hơn là code hoàn toàn mới từ đầu.
-Khó khăn gì thì hỏi. Và đừng động vào các file code quản lý admin, tài liệu của tôi :DDD
+Khó khăn gì thì hỏi. Và đừng động vào các file code quản lý admin, tài liệu của tôi :DDD Đm thằng Đạo.

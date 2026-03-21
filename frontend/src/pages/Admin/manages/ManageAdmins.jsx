@@ -6,7 +6,7 @@ import adminApi from '../../../api/adminApi'
 import { columns, fields } from '../../../constants/admin'
 import PopupMessage from '../../../components/parts/PopupMessage'
 import ConfirmModal from '../../../components/modal/ConfirmModal'
-import { handleAction } from '../../../helpers/helpers'
+import { handleAction } from '../../../helpers/commonHelpers'
 
 import { UserCog, Lock, Unlock, Trash2 } from 'lucide-react'
 
@@ -16,6 +16,7 @@ function ManageAdmin() {
 	const [popup, setPopup] = useState(null)
 	const [editingAdmin, setEditingAdmin] = useState(null)
 	const [warning, setWarning] = useState(null)
+	// warning: handleAction,
 
 	const loadAdmins = async () => {
 		try {
@@ -46,7 +47,7 @@ function ManageAdmin() {
 				<button
 					onClick={() => setShowCreate(true)}
 					className='bg-blue-600 text-white px-4 py-2 rounded-lg'>
-					+ Thêm tài khoản
+					Thêm tài khoản mới
 				</button>
 			</div>
 
@@ -62,38 +63,50 @@ function ManageAdmin() {
 							}}
 						/>
 
-						{row.isActive === 1 ? (
-							<IconButton
-								icon={Lock}
-								onClick={() =>
-									handleAction(adminApi.update, {
-										id: row.id,
-										fullName: row.fullName,
-										email: row.email,
-										level: row.level,
-										isActive: false
-									})
-								}
-							/>
-						) : (
-							<IconButton
-								icon={Unlock}
-								onClick={() =>
-									handleAction(adminApi.update, {
-										id: row.id,
-										fullName: row.fullName,
-										email: row.email,
-										level: row.level,
-										isActive: true
-									}, null, loadAdmins, setPopup)
-								}
-							/>
-						)}
+						<IconButton
+							icon={row.isActive === 1 ? Lock : Unlock}
+							onClick={() => {
+								setWarning({
+									title:
+										'Xác nhận ' +
+										(row.isActive === 1
+											? 'vô hiệu hóa tài khoản'
+											: 'mở khóa tài khoản'),
+									message:
+										'Bạn có chắc chắn muốn ' +
+										(row.isActive === 1
+											? 'vô hiệu hóa'
+											: 'mở khóa') +
+										' tài khoản này?',
+									action: async () =>
+										await adminApi.update({
+											id: row.id,
+											fullName: row.fullName,
+											email: row.email,
+											level: row.level,
+											isActive:
+												row.isActive === 1
+													? false
+													: true
+										}),
+									popup:
+										row.isActive === true
+											? 'Vô hiệu hóa tài khoản thành công.'
+											: 'Mở khóa tài khoản thành công.'
+								})
+							}}
+						/>
 
 						<IconButton
 							icon={Trash2}
 							onClick={() => {
-								setWarning(row.id)
+								setWarning({
+									title: 'Xác nhận xóa tài khoản',
+									message:
+										'Bạn có chắc chắn muốn xóa tài khoản này?',
+									action: () => adminApi.delete(row.id),
+									popup: 'Xóa tài khoản thành công.'
+								})
 							}}
 						/>
 					</>
@@ -102,10 +115,17 @@ function ManageAdmin() {
 
 			{showCreate && (
 				<FormModal
-					title='Thêm tài khoản quản trị'
+					title='Thêm tài khoản quản trị viên'
 					fields={fields}
-					onSubmit={(data) =>
-						handleAction(adminApi.create, data, setShowCreate, loadAdmins, setPopup)
+					onSubmit={(data) => 
+						handleAction(
+							adminApi.create,
+							data,
+							setShowCreate,
+							loadAdmins,
+							setPopup,
+							//"Tạo tài khoản thành công."
+						)
 					}
 					onClose={() => setShowCreate(false)}
 				/>
@@ -113,8 +133,8 @@ function ManageAdmin() {
 
 			{editingAdmin && (
 				<FormModal
-					title='Cập nhật tài khoản'
-					fields={fields}
+					title='Cập nhật thông tin tài khoản'
+					fields={fields.filter(f => f.name !== "isActive")}
 					defaultValues={editingAdmin}
 					onSubmit={(data) =>
 						handleAction(
@@ -122,7 +142,8 @@ function ManageAdmin() {
 							{ id: editingAdmin.id, ...data },
 							setEditingAdmin,
 							loadAdmins,
-							setPopup
+							setPopup,
+							//"Cập nhật tài khoản thành công."
 						)
 					}
 					onClose={() => setEditingAdmin(null)}
@@ -131,15 +152,23 @@ function ManageAdmin() {
 			{popup && (
 				<PopupMessage onClose={() => setPopup(null)} message={popup} />
 			)}
+
 			{warning && (
 				<ConfirmModal
-					title='Xác nhận xóa'
-					message='Bạn có chắc chắn muốn xóa tài khoản này?'
+					title={warning.title}
+					message={warning.message}
 					onConfirm={async () => {
-						await handleAction(adminApi.delete, warning, setWarning, loadAdmins, setPopup)
+						await handleAction(
+							warning.action,
+							null,
+							setWarning,
+							loadAdmins,
+							setPopup,
+							warning.popup
+						)
 					}}
 					onClose={() => setWarning(null)}
-					confirmText='Xóa'
+					confirmText='Xác nhận'
 					color='red'
 				/>
 			)}

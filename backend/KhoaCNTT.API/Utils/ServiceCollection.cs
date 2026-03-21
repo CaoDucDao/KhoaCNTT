@@ -1,5 +1,4 @@
 
-using KhoaCNTT.API.Filters;
 using KhoaCNTT.Application.Common.Utils;
 using KhoaCNTT.Application.Interfaces.Repositories;
 using KhoaCNTT.Application.Interfaces.Repositories.INewsRepositories;
@@ -18,7 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-namespace KhoaCNTT.API.Extensions
+namespace KhoaCNTT.API.Utils
 {
     public static class ServiceCollectionExtensions
     {

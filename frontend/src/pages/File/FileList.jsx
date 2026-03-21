@@ -33,8 +33,14 @@ const FileList = () => {
 				const res = await fileApi.search({ ...filters, page })
 				setFiles(res.items)
 				setTotalPages(Math.ceil(res.total / filters.pageSize))
-			} catch (error) {
-				setPopup(error.message)
+			} catch (err) {
+				const msg =
+					err.response?.data?.message ||
+					err.response?.data?.error ||
+					err.response?.data?.detail ||
+					err.message ||
+					'Không thể kết nối đến máy chủ, thử lại sau.'
+				setPopup?.(msg)
 			} finally {
 				setIsLoading(false)
 			}

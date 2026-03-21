@@ -1,6 +1,5 @@
 ﻿
-using KhoaCNTT.API.Extensions;
-using KhoaCNTT.API.Filters;
+using KhoaCNTT.API.Utils;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 250 * 1024 * 1024; // 200MB
+    options.Limits.MaxRequestBodySize = 250 * 1024 * 1024; // 250MB
 });
 
 builder.Services.AddCors(options =>

@@ -15,13 +15,14 @@ export const handleAction = async (action, data, setter, loader, setPopup) => {
 		const res = await action(data)
 		setter?.(false)
 		loader?.()
-		setPopup?.(res.message || "Thao tác thành công!")
+		setPopup?.(res.message)
 	} catch (err) {
 		const msg =
-			err.response?.data?.message ||
+			err.response?.data?.message || 
+			err.response?.data?.error ||
 			err.response?.data?.detail ||
-			err.message ||
-			'Có lỗi xảy ra'
+			err.message || 
+			'Không thể kết nối đến máy chủ, thử lại sau.'
 		setPopup?.(msg)
 	}
 }

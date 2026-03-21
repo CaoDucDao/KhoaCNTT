@@ -1,7 +1,7 @@
 # KhoaCNTT
 
 Backend: [README.md](/backend/README.md)
-
+Frontend: [README.md](/frontend/README.md)
 
 ### Cách cập nhật code mới khi nhánh main có thay đổi
 

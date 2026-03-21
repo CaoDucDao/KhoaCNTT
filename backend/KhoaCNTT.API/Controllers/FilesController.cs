@@ -19,7 +19,7 @@ namespace KhoaCNTT.API.Controllers
         }
 
         // Middleware kiểm tra quyền cấp 1, 2
-        private bool IsAdminLevel12()
+        private bool _isAdminLevel12()
         {
             var (_, level) = GetAdminInfoFromToken();
             return level == 1 || level == 2;
@@ -32,9 +32,15 @@ namespace KhoaCNTT.API.Controllers
         {
             // Lấy username và level từ Token
             var (username, level) = GetAdminInfoFromToken();
-            
             await _fileService.UploadFileAsync(request, username, level);
-            return Ok("Upload thành công");
+
+            var message = "";
+            if (_isAdminLevel12()) {
+                message = "Tạo tài liệu mới thành công.";
+            } else {
+                message = "Tạo yêu cầu duyệt tài liệu mới thành công.";
+            }
+            return Ok(new { Message = message });
         }
 
         // Sửa thông tin metadata
@@ -43,7 +49,7 @@ namespace KhoaCNTT.API.Controllers
         public async Task<IActionResult> UpdateInfo(int id, [FromBody] UpdateFileRequest request)
         {
             await _fileService.UpdateFileInfoAsync(id, request);
-            return Ok(new { Message = "Cập nhật thông tin thành công" });
+            return Ok(new { Message = "Cập nhật thông tin tài liệu thành công." });
         }
 
         // Thay thế file
@@ -52,9 +58,14 @@ namespace KhoaCNTT.API.Controllers
         public async Task<IActionResult> Replace(int id, [FromForm] UploadFileRequest request)
         {
             var (username, level) = GetAdminInfoFromToken();
-            // ID lấy từ thanh URL, truyền thẳng vào hàm
             await _fileService.ReplaceFileAsync(id, request, username, level);
-            return Ok("Đã gửi yêu cầu thay thế file.");
+            var message = "";
+            if (_isAdminLevel12()) {
+                message = "Thay đổi tài liệu thành công.";
+            } else {
+                message = "Tạo yêu cầu duyệt tài liệu mới thành công.";
+            }
+            return Ok(new { Message = message });
         }
 
 
@@ -63,7 +74,7 @@ namespace KhoaCNTT.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetPendingList()
         {
-            if (!IsAdminLevel12()) return Forbid(); // Chỉ Cấp 1, 2 xem được danh sách
+            if (!_isAdminLevel12()) return Forbid(); // Chỉ Cấp 1, 2 xem được danh sách
             var result = await _fileService.GetPendingRequestsAsync();
             return Ok(result);
         }
@@ -85,10 +96,10 @@ namespace KhoaCNTT.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Approve(int id, [FromBody] ApproveRequest req)
         {
-            if (!IsAdminLevel12()) return Forbid(); // Chỉ Cấp 1,2 xem được duyệt
+            if (!_isAdminLevel12()) return Forbid(); // Chỉ Cấp 1,2 xem được duyệt
             var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             await _fileService.ApproveFileAsync(id, req.IsApproved, req.Reason, username!);
-            return Ok("Đã xử lý yêu cầu duyệt.");
+            return Ok(new { Message = "Xử lý yêu cầu duyệt thành công." });
         }
 
         // Tìm kiếm file / xem toàn bộ file theo trang
@@ -127,9 +138,9 @@ namespace KhoaCNTT.API.Controllers
         public async Task<IActionResult> DeleteFile(int id)
         {
             // Xóa chỉ dành cho admin cấp 1, 2
-            if (!IsAdminLevel12()) return Forbid();
+            if (!_isAdminLevel12()) return Forbid();
             await _fileService.DeleteFileAsync(id);
-            return Ok(new { Message = "Đã xóa file" });
+            return Ok(new { Message = "Đã xóa file thành công." });
         }
 
         // --- CÁC API THỐNG KÊ (STATS) ---

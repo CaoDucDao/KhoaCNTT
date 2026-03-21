@@ -1,5 +1,5 @@
 import { normalizeFileSize } from '../../helpers/fileHelpers'
-import { normalizeDate } from '../../helpers/helpers'
+import { normalizeDate } from '../../helpers/commonHelpers'
 import { FilePlus, Pencil, Trash2 } from 'lucide-react'
 
 function DataTable({ columns = [], data = [], actions, rowKey = 'id' }) {

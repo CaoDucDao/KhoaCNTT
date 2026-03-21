@@ -11,9 +11,10 @@ const adminApi = {
 		return axiosClient.post('/Admins', data)
 	},
 
-	update: (id, data) => {
+	update: (data) => {
+		console.log(typeof data.isActive, data.isActive)
         // data: { fullName, email, level, isActive }
-		return axiosClient.put(`/Admins/${id}`, data)
+		return axiosClient.put(`/Admins/${data.id}`, data)
 	},
 
 	delete: (id) => {

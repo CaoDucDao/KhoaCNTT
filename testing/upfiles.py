@@ -101,7 +101,7 @@ def upload_file(filepath):
     try:
         res = requests.post(API_URL, headers=headers, data=data, files=files, verify=False)
 
-        print(f"{role} | {filename} | {res.status_code}")
+        print(f"{role} | {filename} | {title} | {res.status_code}")
 
     except Exception as e:
         print("Error:", filepath, e)
