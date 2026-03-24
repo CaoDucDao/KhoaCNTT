@@ -3,8 +3,12 @@ import fileApi from '../api/fileApi'
 export const getPagination = (page, totalPages) => {
 	const pages = []
 
-	const start = Math.max(1, page - 2)
-	const end = Math.min(totalPages, page + 2)
+	const start = Math.max(1, page - 1)
+	const end = Math.min(totalPages, page + 1)
+
+	if (totalPages <= 5) {
+		return Array.from({ length: totalPages }, (_, i) => i + 1)
+	}
 
 	if (start > 1) {
 		pages.push(1)
@@ -19,9 +23,10 @@ export const getPagination = (page, totalPages) => {
 		if (end < totalPages - 1) pages.push('...')
 		pages.push(totalPages)
 	}
-
 	return pages
 }
+
+
 
 export const normalizeFileSize = (size) => {
 	if (size == null) return '-'

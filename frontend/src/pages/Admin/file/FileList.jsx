@@ -46,7 +46,10 @@ function FileList() {
 		try {
 			const res = await fileApi.search({ ...filters, page })
 			setFiles(res.items)
-			setTotalPages(Math.ceil(res.total / filters.pageSize))
+			const newTotal = Math.ceil(res.total / filters.pageSize)
+			// setTotalPages(newTotal)
+			// setPage((prev) => (prev > newTotal ? newTotal : prev))
+			setTotalPages((prev) => Math.max(prev, newTotal))
 		} catch (err) {
 			const msg =
 				err.response?.data?.message ||
@@ -63,7 +66,10 @@ function FileList() {
 			try {
 				const res = await fileApi.search({ ...filters, page })
 				setFiles(res.items)
-				setTotalPages(Math.ceil(res.total / filters.pageSize))
+				const newTotal = Math.ceil(res.total / filters.pageSize)
+				// setTotalPages(newTotal)
+				// setPage((prev) => (prev > newTotal ? newTotal : prev))
+				setTotalPages((prev) => Math.max(prev, newTotal))
 			} catch (err) {
 				const msg =
 					err.response?.data?.message ||
@@ -124,7 +130,9 @@ function FileList() {
 						<IconButton
 							icon={Download}
 							color='green'
-							onClick={() => handleDownload(row.id, row.title, setPopup)}
+							onClick={() =>
+								handleDownload(row.id, row.title, setPopup)
+							}
 						/>
 						<IconButton
 							icon={Trash2}

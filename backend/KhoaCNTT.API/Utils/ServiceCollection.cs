@@ -46,7 +46,7 @@ namespace KhoaCNTT.API.Utils
             services.AddScoped<INewsResourceRepository, NewsResourceRepository>();
             services.AddScoped<INewsRequestRepository, NewsRequestRepository>();
             services.AddScoped<INewsApprovalRepository, NewsApprovalRepository>();
-
+            services.AddScoped<ICommentRepository, CommentRepository>();
 
             services.AddScoped<IFileRequestRepository, FileRequestRepository>();
             services.AddScoped<IFileResourceRepository, FileResourceRepository>();
